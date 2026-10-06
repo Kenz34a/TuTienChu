@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag matching package.json (for example v1.2.0)
+        description: Release tag matching package.json (for example v1.3.0)
         required: true
-        default: v1.2.0
+        default: v1.3.0
         type: string
 
 permissions:
@@ -23,12 +23,12 @@ jobs:
     env:
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: npm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -62,11 +62,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
+          RELEASE_NOTES="docs/release-${RELEASE_TAG#v}.md"
+          test -f "$RELEASE_NOTES"
           if gh release view "$RELEASE_TAG" --json isDraft >/dev/null 2>&1; then
             test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
-            gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" --notes-file docs/release-1.2.0.md
+            gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" --notes-file "$RELEASE_NOTES"
           else
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "Vân Tiên Ký $RELEASE_TAG — Windows, Android và web" --notes-file docs/release-1.2.0.md --draft
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "Vân Tiên Ký $RELEASE_TAG — Windows, Android và web" --notes-file "$RELEASE_NOTES" --draft
           fi
           gh release upload "$RELEASE_TAG" release/van-tien-ky-pc-windows.zip release/van-tien-ky-android.apk release/van-tien-ky-web-server.zip release/SHA256SUMS.txt --clobber
           gh release edit "$RELEASE_TAG" --draft=false --latest

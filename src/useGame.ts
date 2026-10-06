@@ -49,7 +49,7 @@ export function useGame() {
   }, [state, storageBlocked, tell]);
   useEffect(() => {
     act({ type: 'tick', now: Date.now() });
-    const interval = setInterval(() => act({ type: 'tick', now: Date.now() }), 15000);
+    const interval = setInterval(() => act({ type: 'tick', now: Date.now() }), 1000);
     const onFocus = () => act({ type: 'tick', now: Date.now() });
     window.addEventListener('focus', onFocus);
     return () => {

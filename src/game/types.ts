@@ -1,5 +1,5 @@
 export type World = 'earth' | 'immortal' | 'divine';
-export type EnemyKind = 'normal' | 'elite' | 'boss';
+export type EnemyKind = 'normal' | 'elite' | 'boss' | 'dungeon';
 export type Slot = 'robe' | 'hat' | 'pants' | 'boots' | 'ring' | 'gloves' | 'necklace';
 export type RaceId = 'human' | 'spirit' | 'dragon' | 'fox' | 'ancient';
 export type ItemId = 'herb' | 'ore' | 'essence' | 'pill' | 'elixir' | 'key';
@@ -21,6 +21,8 @@ export interface Battle {
   enemyStage: number;
   enraged: boolean;
   secretId?: string;
+  dungeonId?: string;
+  wave?: number;
   mapId: string;
   name: string;
   title: string;
@@ -40,6 +42,7 @@ export interface GameState {
   stage: number;
   xp: number;
   stones: number;
+  wallet: { immortal: number; divine: number };
   hp: number;
   stamina: number;
   lastTick: number;
@@ -72,6 +75,25 @@ export interface GameState {
   battle: Battle | null;
   nextUid: number;
   incenseUntil: number;
+  lingqi: number;
+  training: { active: boolean; remainder: number; totalSeconds: number; boostedSeconds: number };
+  manuals: Record<string, number>;
+  activeManuals: string[];
+  customSect: null | {
+    name: string;
+    level: number;
+    members: number;
+    treasury: number;
+    buildings: { hall: number; training: number; alchemy: number };
+  };
+  dungeons: {
+    active: { id: string; wave: number } | null;
+    clears: Record<string, number>;
+    cooldowns: Record<string, number>;
+  };
+  worldBossClaims: number;
+  spiritualRoot: null | { id: string; level: number };
+  inheritances: string[];
 }
 export interface Stats {
   maxHp: number;
@@ -82,6 +104,18 @@ export interface Stats {
 }
 export type Action =
   | { type: 'meditate' }
+  | { type: 'stop-training' }
+  | { type: 'study'; id: string }
+  | { type: 'activate-manual'; id: string }
+  | { type: 'found-sect'; name: string }
+  | { type: 'sect-build'; building: 'hall' | 'training' | 'alchemy' }
+  | { type: 'recruit' }
+  | { type: 'leave-sect' }
+  | { type: 'dungeon'; id: string }
+  | { type: 'awaken-root' }
+  | { type: 'purify-root' }
+  | { type: 'inherit'; id: string }
+  | { type: 'exchange-currency'; from: 'spirit' | 'immortal' | 'divine'; direction: 'up' | 'down' }
   | { type: 'breakthrough' }
   | { type: 'rest' }
   | { type: 'tick'; now: number }

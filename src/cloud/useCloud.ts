@@ -60,7 +60,7 @@ export function useCloud(
     setStatus('conflict');
   }, []);
   const pump = useCallback(
-    async (force = false) => {
+    async (force = false): Promise<void> => {
       const a = session.current;
       if (
         !a ||
@@ -114,7 +114,9 @@ export function useCloud(
           }
         }
         if (active()) {
-          setStatus('synced');
+          setStatus(
+            fingerprint(current.current.state) === session.current?.baseline ? 'synced' : 'syncing',
+          );
           setError('');
           retryAt.current = 0;
         }
@@ -137,6 +139,16 @@ export function useCloud(
       } finally {
         busy.current = false;
         setWorking(false);
+        // A player action can occur while PUT is in flight. Flush that newer state
+        // before reporting completion or allowing a dependent community action.
+        if (
+          active() &&
+          !pending.current &&
+          Date.now() >= retryAt.current &&
+          fingerprint(current.current.state) !== session.current?.baseline
+        ) {
+          await pump(force);
+        }
       }
     },
     [hold, persist],
@@ -246,5 +258,19 @@ export function useCloud(
     choose,
     logout,
     sync: () => pump(true),
+    receive: (value: CloudSave, token: string) => {
+      const cloud = parseCloud(value),
+        a = session.current;
+      if (!a || a.token !== token || !cloud.state) return;
+      if (fingerprint(current.current.state) !== a.baseline || pending.current) {
+        hold(cloud);
+        return;
+      }
+      current.current.state = cloud.state;
+      current.current.restore(cloud.state);
+      persist({ ...a, revision: cloud.revision, baseline: fingerprint(cloud.state) });
+      lastPull.current = Date.now();
+      setStatus('synced');
+    },
   };
 }

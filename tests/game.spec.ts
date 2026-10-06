@@ -16,8 +16,8 @@ test('all worlds list multiple monster species and hidden areas', async ({ page 
     await expect(page.getByRole('region', { name: 'Bí cảnh ẩn' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Phá phong ấn/ })).toBeDisabled();
     await page.locator('.map-bestiary').first().click();
-    await expect(page.locator('.bestiary-enemy')).toHaveCount(5);
-    await expect(page.locator('.bestiary-enemy.elite')).toHaveCount(2);
+    await expect(page.locator('.bestiary-enemy')).toHaveCount(8);
+    await expect(page.locator('.bestiary-enemy.elite')).toHaveCount(3);
     await page.getByRole('button', { name: 'Đóng', exact: true }).click();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -81,10 +81,11 @@ test('complete beginner loop: cultivation, quest, gear, alchemy, NPC and sect', 
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Hôm nay, tiến thêm một bước.' })).toBeVisible();
-  const meditate = page.getByRole('button', { name: /Tĩnh tâm tu luyện/ });
-  for (let i = 0; i < 3; i++) await meditate.click();
+  await page.clock.install();
+  await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
+  await page.clock.fastForward(3 * 60000);
   await page.getByRole('button', { name: 'Nhận', exact: true }).first().click();
-  for (let i = 0; i < 4; i++) await meditate.click();
+  await page.clock.fastForward(8 * 60000);
   await page.getByRole('button', { name: 'Đột phá', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Luyện Khí Trung kỳ');
   const nav = page
@@ -190,9 +191,10 @@ test('install assets and offline reload preserve the game', async ({ page, conte
       }
     }),
   ).toBe(true);
-  await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
+  await expect(page.getByRole('button', { name: /Xuất định/ })).toBeVisible();
   const save = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), SAVE_KEY);
-  expect(save.metrics.meditations).toBe(2);
+  expect(save.training.active).toBe(true);
+  expect(save.metrics.meditations).toBe(0);
 });
 
 test('responsive layout, navigation, and destructive action confirmation', async ({ page }) => {
@@ -212,12 +214,13 @@ test('responsive layout, navigation, and destructive action confirmation', async
 test('export, invalid import protection, and valid import work on the device', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
-  await page.getByRole('button', { name: 'Bản 1.2 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.3 · Lưu cục bộ' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Xuất bản lưu/ }).click();
   const download = await downloadPromise;
   const saved = JSON.parse(await readFile((await download.path())!, 'utf8'));
-  expect(saved.metrics.meditations).toBe(1);
+  expect(saved.training.active).toBe(true);
+  expect(saved.metrics.meditations).toBe(0);
   await page.locator('input[type=file]').setInputFiles({
     name: 'invalid.json',
     mimeType: 'application/json',
@@ -229,7 +232,7 @@ test('export, invalid import protection, and valid import work on the device', a
       (key) => JSON.parse(localStorage.getItem(key)!).metrics.meditations,
       SAVE_KEY,
     ),
-  ).toBe(1);
+  ).toBe(0);
   saved.name = 'Mộng Vân';
   saved.stage = 2;
   await page.locator('input[type=file]').setInputFiles({
@@ -255,6 +258,10 @@ test('every screen stays within the viewport and race bonuses update', async ({ 
     'Tông môn',
     'Luyện chế',
     'Nhân vật',
+    'Bí kíp',
+    'Phó bản',
+    'Thiên bảng',
+    'Linh căn & truyền thừa',
   ]) {
     if (await page.getByRole('button', { name: 'Mở menu' }).isVisible())
       await page.getByRole('button', { name: 'Mở menu' }).click();
@@ -267,6 +274,12 @@ test('every screen stays within the viewport and race bonuses update', async ({ 
       label,
     ).toBe(true);
   }
+  if (await page.getByRole('button', { name: 'Mở menu' }).isVisible())
+    await page.getByRole('button', { name: 'Mở menu' }).click();
+  await page
+    .getByRole('navigation', { name: 'Điều hướng chính' })
+    .getByRole('button', { name: 'Nhân vật', exact: true })
+    .click();
   await page.getByRole('textbox', { name: /Đạo hiệu/ }).fill('Thanh Long');
   await page.locator('input[value="dragon"]').check();
   await page.getByRole('button', { name: /Lưu đạo hiệu/ }).click();
@@ -307,5 +320,6 @@ test('storage write failures are visible and the current game can still be expor
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Xuất bản lưu', exact: true }).click();
   const saved = JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
-  expect(saved.metrics.meditations).toBe(1);
+  expect(saved.training.active).toBe(true);
+  expect(saved.metrics.meditations).toBe(0);
 });

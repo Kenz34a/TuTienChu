@@ -2,6 +2,7 @@ import { ITEMS, MAPS, NPCS, QUESTS, RACES, SECTS, SLOTS } from './data';
 import { initialState, stats } from './engine';
 import type { GameState, Gear } from './types';
 import { ALL_ENEMIES, ENEMIES, SECRET_AREAS } from './encounters';
+import { DUNGEONS, MANUALS, SPIRITUAL_ROOTS, INHERITANCES } from './expansion';
 
 export const SAVE_KEY = 'van-tien-ky.save.v1';
 const number = (value: unknown, max = 1e12) =>
@@ -90,7 +91,112 @@ export function decodeSave(input: string): GameState {
     )
   )
     return invalid();
-  if (v.sect !== null && !SECTS.some((s) => s.id === v.sect)) return invalid();
+  const defaults = initialState();
+  for (const key of [
+    'lingqi',
+    'training',
+    'manuals',
+    'activeManuals',
+    'customSect',
+    'dungeons',
+    'worldBossClaims',
+    'spiritualRoot',
+    'inheritances',
+    'wallet',
+  ] as const)
+    if (v[key] === undefined) v[key] = defaults[key];
+  if (!record(v.wallet) || !integer(v.wallet.immortal, 1e9) || !integer(v.wallet.divine, 1e9))
+    return invalid();
+  if (
+    v.spiritualRoot !== null &&
+    (!record(v.spiritualRoot) ||
+      !SPIRITUAL_ROOTS.some((r) => r.id === (v.spiritualRoot as Record<string, unknown>).id) ||
+      !integer(v.spiritualRoot.level, 10) ||
+      (v.spiritualRoot.level as number) < 1)
+  )
+    return invalid();
+  if (
+    !list(
+      v.inheritances,
+      INHERITANCES.map((i) => i.id),
+    )
+  )
+    return invalid();
+  if (
+    record(v.spiritualRoot) &&
+    v.spiritualRoot.id === 'chaos' &&
+    !(v.inheritances as string[]).includes('origin-legacy')
+  )
+    return invalid();
+  if (record(v.training) && v.training.boostedSeconds === undefined) v.training.boostedSeconds = 0;
+  if (
+    !number(v.lingqi, 1e9) ||
+    !integer(v.worldBossClaims) ||
+    !record(v.training) ||
+    typeof v.training.active !== 'boolean' ||
+    !number(v.training.remainder, 59.999999999) ||
+    !number(v.training.totalSeconds) ||
+    !number(v.training.boostedSeconds, v.training.remainder as number)
+  )
+    return invalid();
+  if (
+    !record(v.manuals) ||
+    Object.entries(v.manuals).some(
+      ([id, level]) =>
+        !MANUALS.some((m) => m.id === id) || !integer(level, 10) || (level as number) < 1,
+    ) ||
+    !list(v.activeManuals, Object.keys(v.manuals)) ||
+    (v.activeManuals as string[]).length > 3
+  )
+    return invalid();
+  if (v.customSect !== null) {
+    const c = v.customSect;
+    if (
+      !record(c) ||
+      !text(c.name, 24) ||
+      (c.name as string).trim().length < 2 ||
+      !integer(c.level, 10) ||
+      (c.level as number) < 1 ||
+      !integer(c.members, (c.level as number) * 10) ||
+      (c.members as number) < 1 ||
+      !integer(c.treasury) ||
+      !record(c.buildings) ||
+      ['hall', 'training', 'alchemy'].some(
+        (k) =>
+          !integer((c.buildings as Record<string, unknown>)[k], 10) ||
+          (c.buildings as Record<string, number>)[k] < 1 ||
+          (c.buildings as Record<string, number>)[k] > (c.level as number),
+      ) ||
+      c.level !== c.buildings.hall
+    )
+      return invalid();
+  }
+  if (
+    v.sect !== null &&
+    !(v.sect === 'custom' && v.customSect) &&
+    !SECTS.some((s) => s.id === v.sect)
+  )
+    return invalid();
+  const dungeons = v.dungeons;
+  if (
+    !record(dungeons) ||
+    !record(dungeons.clears) ||
+    !record(dungeons.cooldowns) ||
+    Object.entries(dungeons.clears).some(
+      ([id, count]) => !DUNGEONS.some((d) => d.id === id) || !integer(count, 1e8),
+    ) ||
+    Object.entries(dungeons.cooldowns).some(
+      ([id, time]) => !DUNGEONS.some((d) => d.id === id) || !number(time, 1e15),
+    )
+  )
+    return invalid();
+  if (
+    dungeons.active !== null &&
+    (!record(dungeons.active) ||
+      !DUNGEONS.some((d) => d.id === (dungeons.active as Record<string, unknown>).id) ||
+      !integer(dungeons.active.wave, 2))
+  )
+    return invalid();
   // Additive migration: old v1 saves keep all progress and live battles.
   if (v.encounters === undefined) {
     v.encounters = {
@@ -191,12 +297,24 @@ export function decodeSave(input: string): GameState {
     }
     const enemy = ALL_ENEMIES.find((enemy) => enemy.id === b.enemyId);
     const secret = SECRET_AREAS.find((area) => area.id === b.secretId);
+    const dungeon = DUNGEONS.find((d) => d.id === b.dungeonId);
     if (
       !enemy ||
       enemy.mapId !== b.mapId ||
       enemy.kind !== b.kind ||
       !integer(b.enemyStage, 59) ||
       typeof b.enraged !== 'boolean' ||
+      (b.kind === 'dungeon'
+        ? !dungeon ||
+          !record(dungeons.active) ||
+          dungeons.active.id !== dungeon.id ||
+          dungeons.active.wave !== b.wave ||
+          !integer(b.wave, 2) ||
+          b.enemyId !== `dungeon-${dungeon.id}-${b.wave}` ||
+          b.enemyStage !== dungeon.minStage ||
+          b.secretId !== undefined ||
+          b.enraged
+        : b.dungeonId !== undefined || b.wave !== undefined) ||
       (b.kind === 'boss'
         ? !secret ||
           secret.boss.id !== b.enemyId ||
@@ -207,6 +325,8 @@ export function decodeSave(input: string): GameState {
     )
       return invalid();
   }
+  if ((dungeons.active !== null) !== (record(v.battle) && v.battle.kind === 'dungeon'))
+    return invalid();
   const s = v as unknown as GameState;
   s.hp = Math.min(s.hp, stats(s).maxHp);
   s.lastTick = Math.min(s.lastTick, Date.now());

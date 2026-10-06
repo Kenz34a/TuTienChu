@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MAPS, QUESTS, REALMS, realmName, stoneCost, xpNeeded } from './data';
 import { dayKey, initialState, perform, stats } from './engine';
 import { decodeSave } from './storage';
+import { qiCost } from './expansion';
 import type { Action, GameState } from './types';
 
 const now = Date.UTC(2026, 9, 6, 12);
@@ -24,12 +25,21 @@ describe('Cultivation and recovery', () => {
     expect(realmName(0)).toBe('Luyện Khí Sơ kỳ');
     expect(realmName(59)).toBe('Thần Đế Đỉnh phong');
   });
-  it('meditation consumes stamina and advances quest metrics without mutating input', () => {
+  it('meditation starts without instant gains, awards a completed minute, and rejects repeated clicks', () => {
     const original = start();
-    const { state: s, ok } = run(original, { type: 'meditate' });
-    expect(ok).toBe(true);
-    expect(s.stamina).toBe(97);
+    const started = run(original, { type: 'meditate' });
+    expect(started.ok).toBe(true);
+    expect(started.state.xp).toBe(28);
+    expect(started.state.metrics.meditations).toBe(0);
+    expect(run(started.state, { type: 'meditate' }).ok).toBe(false);
+    const s = perform(
+      started.state,
+      { type: 'tick', now: now + 60000 },
+      () => 0.5,
+      now + 60000,
+    ).state;
     expect(s.xp).toBeGreaterThan(28);
+    expect(s.lingqi).toBeGreaterThan(0);
     expect(s.metrics.meditations).toBe(1);
     expect(s.daily.meditations).toBe(1);
     expect(original.xp).toBe(28);
@@ -52,6 +62,8 @@ describe('Cultivation and recovery', () => {
     for (let stage = 0; stage < 59; stage++) {
       s.xp = xpNeeded(stage);
       s.stones = stoneCost(stage);
+      s.lingqi = qiCost(stage);
+      s.wallet = { immortal: 1000, divine: 1000 };
       const result = run(s, { type: 'breakthrough' });
       expect(result.ok).toBe(true);
       s = result.state;
@@ -93,7 +105,7 @@ describe('Cultivation and recovery', () => {
     expect(s.stones).toBe(130);
     expect(run(s, { type: 'incense' }).ok).toBe(false);
     const next = perform(s, { type: 'tick', now: now + 3600000 }, () => 0.5, now + 3600000).state;
-    expect(next.xp).toBe(43);
+    expect(next.xp).toBe(28); // Incense amplifies meditation; it no longer generates instant/passive XP.
   });
 });
 
@@ -142,7 +154,7 @@ describe('Exploration and battle', () => {
     expect(s.metrics.kills).toBe(1);
     expect(s.daily.kills).toBe(1);
     expect(s.stones).toBe(205);
-    expect(s.xp).toBe(50);
+    expect(s.xp).toBe(36);
     expect(run(s, { type: 'fight', move: 'attack' }).ok).toBe(false);
   });
   it('skill has a 3-turn cooldown and cannot be spammed', () => {
@@ -270,7 +282,7 @@ describe('Gear, economy, race, and sect', () => {
   });
   it('sect bonus is active, cannot join twice, and donations pay rewards', () => {
     let s = run(start(), { type: 'join', sectId: 'cloud' }).state;
-    expect(stats(s).cultivation).toBeCloseTo(1.38);
+    expect(stats(s).cultivation).toBeCloseTo(1.38 * 1.05);
     expect(run(s, { type: 'join', sectId: 'sword' }).ok).toBe(false);
     for (let i = 0; i < 3; i++) s = run(s, { type: 'donate' }).state;
     expect(s.contribution).toBe(75);
@@ -283,7 +295,8 @@ describe('Quests, NPCs, and save validation', () => {
   it('quest reward requires completion and can only be claimed once', () => {
     let s = start();
     expect(run(s, { type: 'quest', id: 'first' }).ok).toBe(false);
-    for (let i = 0; i < 3; i++) s = run(s, { type: 'meditate' }).state;
+    s = run(s, { type: 'meditate' }).state;
+    s = perform(s, { type: 'tick', now: now + 180000 }, () => 0.5, now + 180000).state;
     const reward = run(s, { type: 'quest', id: 'first' }).state;
     expect(reward.stones).toBe(s.stones + 60);
     expect(reward.claimed).toContain('first');

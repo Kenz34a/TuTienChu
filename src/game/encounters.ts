@@ -1,5 +1,6 @@
 import { MAPS } from './data';
 import type { EnemyKind, GameState, World } from './types';
+import { DUNGEONS } from './expansion';
 
 export interface Enemy {
   id: string;
@@ -29,17 +30,28 @@ const inhabitants: Record<string, [string, string, string, string]> = {
 };
 
 export const ENEMIES: Enemy[] = MAPS.flatMap((map) => {
-  const names = [map.enemy, ...inhabitants[map.id]];
+  const names = [
+    map.enemy,
+    ...(inhabitants[map.id] || [
+      `${map.enemy} Con`,
+      `${map.enemy} Linh Ảnh`,
+      `${map.enemy} Đầu Đàn`,
+      `${map.enemy} Cổ Thú`,
+    ]),
+    `${map.enemy} Ấu Thú`,
+    `${map.enemy} Dạ Hành`,
+    `${map.enemy} Hộ Vệ`,
+  ];
   return names.map((name, i) => ({
     id: `${map.id}-${i}`,
     mapId: map.id,
     name,
     title: map.enemyTitle,
-    kind: i < 3 ? 'normal' : 'elite',
-    hpMultiplier: i < 3 ? 1 : 1.65,
-    attackMultiplier: i < 3 ? 1 : 1.3,
-    defenseMultiplier: i < 3 ? 1 : 1.4,
-    rewardMultiplier: i < 3 ? 1 : 2.2,
+    kind: [0, 1, 2, 5, 6].includes(i) ? 'normal' : 'elite',
+    hpMultiplier: [0, 1, 2, 5, 6].includes(i) ? 1 : 1.65,
+    attackMultiplier: [0, 1, 2, 5, 6].includes(i) ? 1 : 1.3,
+    defenseMultiplier: [0, 1, 2, 5, 6].includes(i) ? 1 : 1.4,
+    rewardMultiplier: [0, 1, 2, 5, 6].includes(i) ? 1 : 2.2,
   }));
 });
 
@@ -119,11 +131,29 @@ export const SECRET_AREAS: SecretArea[] = [
     },
   },
 ];
-export const ALL_ENEMIES = [...ENEMIES, ...SECRET_AREAS.map((area) => area.boss)];
+export const DUNGEON_ENEMIES: Enemy[] = DUNGEONS.flatMap((d) =>
+  d.names.map((name, wave) => ({
+    id: `dungeon-${d.id}-${wave}`,
+    mapId: d.mapId,
+    name,
+    title: wave === 2 ? 'Trấn thủ phó bản' : 'Hộ vệ phó bản',
+    kind: 'dungeon' as const,
+    hpMultiplier: [1, 1.5, 2.2][wave],
+    attackMultiplier: [1, 1.2, 1.35][wave],
+    defenseMultiplier: [1, 1.2, 1.5][wave],
+    rewardMultiplier: [0.5, 0.75, 2][wave],
+  })),
+);
+export const ALL_ENEMIES = [
+  ...ENEMIES,
+  ...SECRET_AREAS.map((area) => area.boss),
+  ...DUNGEON_ENEMIES,
+];
 export const KIND_LABELS: Record<EnemyKind, string> = {
   normal: 'Quái thường',
   elite: 'Tinh anh',
   boss: 'Boss ẩn',
+  dungeon: 'Phó bản',
 };
 export const worldVisits = (s: GameState, world: World) =>
   MAPS.filter((m) => m.world === world).reduce(
@@ -133,7 +163,7 @@ export const worldVisits = (s: GameState, world: World) =>
 export const enemyForMap = (mapId: string, roll: number): Enemy => {
   const enemies = ENEMIES.filter((enemy) => enemy.mapId === mapId);
   // Conditional on entering combat: 80% normal, 20% elite, equal odds within each group.
-  return roll < 0.8
-    ? enemies[Math.min(2, Math.floor((roll / 0.8) * 3))]
-    : enemies[3 + Math.min(1, Math.floor(((roll - 0.8) / 0.2) * 2))];
+  const group = enemies.filter((e) => e.kind === (roll < 0.8 ? 'normal' : 'elite'));
+  const fraction = roll < 0.8 ? roll / 0.8 : (roll - 0.8) / 0.2;
+  return group[Math.min(group.length - 1, Math.floor(fraction * group.length))];
 };

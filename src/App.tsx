@@ -29,6 +29,9 @@ import {
   Menu,
   MonitorSmartphone,
   Mountain,
+  Moon,
+  Trophy,
+  Skull,
   Plus,
   ScrollText,
   Search,
@@ -50,6 +53,19 @@ import { Bestiary, SecretPanel } from './EncounterPanels';
 import { KIND_LABELS, SECRET_AREAS } from './game/encounters';
 import { useGame } from './useGame';
 import { useCloud } from './cloud/useCloud';
+import { useCommunity } from './cloud/useCommunity';
+import { useNotifications } from './useNotifications';
+import { useTheme } from './useTheme';
+import { CurrencyPanel, LineagePanel } from './LineagePanel';
+import './expansion.css';
+import {
+  CommunityPanel,
+  CultivatorArt,
+  CustomSectPanel,
+  DungeonsPanel,
+  ManualsPanel,
+} from './ExpansionPanels';
+import { qiCost, breakthroughTier, canPayBreakthroughTier, tierLabel } from './game/expansion';
 import { AccountPanel } from './cloud/AccountPanel';
 import { nativeApp, desktopApp, androidApp } from './cloud/client';
 import {
@@ -67,6 +83,7 @@ import {
   questClaimed,
   realmName,
   sectRank,
+  sectInfo,
   stoneCost,
   xpNeeded,
   type MapData,
@@ -76,8 +93,28 @@ import { bagUsed, gearPower, stats } from './game/engine';
 import { SAVE_KEY } from './game/storage';
 import type { GameState, Gear, ItemId, RaceId, World } from './game/types';
 
-type View = 'dashboard' | 'world' | 'bag' | 'quests' | 'sect' | 'craft' | 'character';
-type Dialog = 'settings' | 'help' | 'shop' | 'realms' | 'install' | 'events' | 'account' | null;
+type View =
+  | 'dashboard'
+  | 'world'
+  | 'bag'
+  | 'quests'
+  | 'sect'
+  | 'craft'
+  | 'character'
+  | 'manuals'
+  | 'dungeons'
+  | 'community'
+  | 'lineage';
+type Dialog =
+  | 'settings'
+  | 'help'
+  | 'shop'
+  | 'realms'
+  | 'install'
+  | 'events'
+  | 'account'
+  | 'notifications'
+  | null;
 interface InstallEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -109,6 +146,30 @@ const navigation = [
     label: 'Nhân vật',
     icon: UserRound,
     subtitle: 'Hiểu mình để hiểu đạo',
+  },
+  {
+    id: 'manuals' as View,
+    label: 'Bí kíp',
+    icon: BookOpen,
+    subtitle: 'Tham ngộ đạo pháp trong tàng kinh các',
+  },
+  {
+    id: 'lineage' as View,
+    label: 'Linh căn & truyền thừa',
+    icon: Sparkles,
+    subtitle: 'Thức tỉnh thiên tư, kế thừa đạo thống',
+  },
+  {
+    id: 'dungeons' as View,
+    label: 'Phó bản',
+    icon: Skull,
+    subtitle: 'Vượt ba cửa, giữ vững đạo tâm',
+  },
+  {
+    id: 'community' as View,
+    label: 'Thiên bảng',
+    icon: Trophy,
+    subtitle: 'Xếp hạng, top online và boss thế giới',
   },
 ];
 const fmt = (n: number) => Math.floor(n).toLocaleString('vi-VN');
@@ -327,7 +388,7 @@ function MapCard({
           )}
         </button>
         <button className="map-bestiary" onClick={onBestiary}>
-          <Eye size={12} />3 quái thường · 2 tinh anh
+          <Eye size={12} />5 quái thường · 3 tinh anh
           <ChevronRight size={12} />
         </button>
       </div>
@@ -415,9 +476,19 @@ export default function App() {
   const game = useGame(),
     { state: s, act, notice, tell } = game;
   const cloud = useCloud(s, game.restoreCloud, game.storageBlocked);
+  const community = useCommunity(cloud);
+  const alerts = useNotifications(
+    s,
+    community.data,
+    `${cloud.server}:${cloud.account?.username || 'guest'}`,
+  );
+  const appearance = useTheme();
+  const currentSect = sectInfo(s);
+  const realmCoins = breakthroughTier(s.stage);
   const st = stats(s),
     needed = xpNeeded(s.stage),
-    ready = s.xp >= needed && s.stage < 59;
+    ready =
+      s.xp >= needed && s.lingqi >= qiCost(s.stage) && canPayBreakthroughTier(s) && s.stage < 59;
   const [view, setView] = useState<View>('dashboard');
   const [world, setWorld] = useState<World>('earth');
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -658,6 +729,13 @@ export default function App() {
           </div>
           <div className="topbar-actions">
             <button
+              className="icon-button theme-toggle"
+              aria-label={appearance.theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
+              onClick={appearance.toggle}
+            >
+              {appearance.theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+            </button>
+            <button
               className={`cloud-header ${cloud.status}`}
               onClick={() => setDialog('account')}
               aria-label="Tài khoản & đồng bộ"
@@ -681,11 +759,13 @@ export default function App() {
             </button>
             <button
               className="icon-button notification"
-              aria-label="Nhật ký hành trình"
-              onClick={() => setDialog('events')}
+              aria-label="Thông báo"
+              onClick={() => setDialog('notifications')}
             >
               <Bell size={19} />
-              {s.events.length > 1 && <i />}
+              {alerts.unread > 0 && (
+                <b className="notification-count">{alerts.unread > 9 ? '9+' : alerts.unread}</b>
+              )}
             </button>
             <button
               className="header-avatar"
@@ -841,9 +921,7 @@ export default function App() {
                   </span>
                   <span>
                     <small>Tông môn</small>
-                    <strong className="sect-stat">
-                      {SECTS.find((t) => t.id === s.sect)?.name || 'Tự do tu hành'}
-                    </strong>
+                    <strong className="sect-stat">{currentSect?.name || 'Tự do tu hành'}</strong>
                     <small className="stat-detail">
                       {s.sect
                         ? `${sectRank(s.contribution)} · ${s.contribution} cống hiến`
@@ -917,9 +995,15 @@ export default function App() {
                     </div>
                   </div>
                   <div className="cultivation-actions">
-                    <button className="button primary" onClick={() => act({ type: 'meditate' })}>
+                    <button
+                      className="button primary"
+                      onClick={() =>
+                        act({ type: s.training.active ? 'stop-training' : 'meditate' })
+                      }
+                    >
                       <Wind size={17} />
-                      Tĩnh tâm tu luyện<span>−3 thể lực</span>
+                      {s.training.active ? 'Xuất định' : 'Tĩnh tâm tu luyện'}
+                      <span>{s.training.active ? 'Dừng ngồi thiền' : 'Ngồi thiền'}</span>
                     </button>
                     <button
                       className={`button ${ready ? 'gold-button' : 'secondary'}`}
@@ -929,6 +1013,29 @@ export default function App() {
                       <Sparkles size={16} />
                       Đột phá
                     </button>
+                  </div>
+                  <div className={`training-status ${s.training.active ? 'active' : ''}`}>
+                    <CultivatorArt active={s.training.active} />
+                    <div>
+                      <strong>
+                        {s.training.active
+                          ? `Đang ngồi thiền · ${Math.ceil(60 - s.training.remainder)}s đến chu kỳ tiếp`
+                          : 'Tĩnh tâm rồi mới nhập đạo'}
+                      </strong>
+                      <p>
+                        Tu vi +{(needed * 0.03 * st.cultivation).toFixed(1)}/phút · Linh khí +
+                        {Math.floor((6 + s.stage) * st.cultivation)}/phút
+                      </p>
+                      <span>
+                        <Sparkles size={13} />
+                        {fmt(s.lingqi)} linh khí · Đột phá cần {qiCost(s.stage)}
+                        {realmCoins ? ` + ${realmCoins.amount} ${tierLabel(realmCoins.kind)}` : ''}
+                      </span>
+                      <small>
+                        Đã ngồi thiền {Math.floor(s.training.totalSeconds / 60)} phút · Ngoại tuyến
+                        nhận tối đa 2 giờ
+                      </small>
+                    </div>
                   </div>
                   <div className="cultivation-foot">
                     <span>
@@ -1135,7 +1242,10 @@ export default function App() {
                         if (act({ type: 'npc', npcId: npc.id, choice: 'talk' })) setNpcId(npc.id);
                       }}
                     >
-                      <span className="npc-avatar">{npc.symbol}</span>
+                      <span className="npc-avatar">
+                        <UserRound size={30} />
+                        <small>{npc.symbol}</small>
+                      </span>
                       <span>
                         <small>{npc.role}</small>
                         <strong>{npc.name}</strong>
@@ -1470,16 +1580,18 @@ export default function App() {
                 <section className="sect-home panel">
                   <Landscape terrain="temple" />
                   <div className="sect-home-content">
-                    <span className="sect-emblem">
-                      {SECTS.find((t) => t.id === s.sect)!.symbol}
-                    </span>
+                    <span className="sect-emblem">{currentSect!.symbol}</span>
                     <Tag color="green">TÔNG MÔN CỦA BẠN</Tag>
-                    <h2>{SECTS.find((t) => t.id === s.sect)!.name}</h2>
-                    <p>{SECTS.find((t) => t.id === s.sect)!.motto}</p>
+                    <h2>{currentSect!.name}</h2>
+                    <p>{currentSect!.motto}</p>
                     <div className="sect-member-stats">
                       <span>
                         <small>Thân phận</small>
-                        <strong>Đệ tử {sectRank(s.contribution).toLowerCase()}</strong>
+                        <strong>
+                          {s.sect === 'custom'
+                            ? 'Tông chủ'
+                            : `Đệ tử ${sectRank(s.contribution).toLowerCase()}`}
+                        </strong>
                       </span>
                       <span>
                         <small>Cống hiến</small>
@@ -1487,7 +1599,7 @@ export default function App() {
                       </span>
                       <span>
                         <small>Tông môn gia trì</small>
-                        <strong>{SECTS.find((t) => t.id === s.sect)!.bonus}</strong>
+                        <strong>{currentSect!.bonus}</strong>
                       </span>
                     </div>
                     <button className="button primary" onClick={() => act({ type: 'donate' })}>
@@ -1513,9 +1625,10 @@ export default function App() {
                 </div>
               )}
               <SectionTitle
-                eyebrow="TAM ĐẠI TIÊN TÔNG"
+                eyebrow="CỬU ĐẠI SƠN MÔN"
                 title={s.sect ? 'Những sơn môn trong thiên hạ' : 'Tìm nơi thuộc về'}
               />
+              <CustomSectPanel state={s} act={act} />
               <div className="sect-grid">
                 {SECTS.map((sect, i) => (
                   <article
@@ -1795,6 +1908,53 @@ export default function App() {
               </section>
             </>
           )}
+          {view === 'manuals' && <ManualsPanel state={s} act={act} />}
+          {view === 'lineage' && <LineagePanel state={s} act={act} />}
+          {view === 'dungeons' && <DungeonsPanel state={s} act={act} />}
+          {view === 'community' && (
+            <CommunityPanel
+              state={s}
+              act={act}
+              community={community}
+              loggedIn={!!cloud.account}
+              onLogin={() => setDialog('account')}
+            />
+          )}
+          {view === 'dashboard' && (
+            <div className="feature-shortcuts">
+              {[
+                {
+                  id: 'manuals' as View,
+                  icon: BookOpen,
+                  name: 'Tàng kinh các',
+                  text: '15 bí kíp, 3 đạo pháp đồng hành',
+                },
+                {
+                  id: 'dungeons' as View,
+                  icon: Skull,
+                  name: 'Thí luyện phó bản',
+                  text: 'Ba cửa chiến đấu, chiến lợi phẩm quý',
+                },
+                {
+                  id: 'community' as View,
+                  icon: Trophy,
+                  name: 'Thiên bảng & boss',
+                  text: community.data
+                    ? `${community.data.onlineCount} đạo hữu đang online`
+                    : 'Cùng đạo hữu viết tên lên thiên bảng',
+                },
+              ].map((f) => (
+                <button className="panel feature-shortcut" key={f.id} onClick={() => moveTo(f.id)}>
+                  <f.icon size={27} />
+                  <div>
+                    <strong>{f.name}</strong>
+                    <span>{f.text}</span>
+                  </div>
+                  <ChevronRight size={18} />
+                </button>
+              ))}
+            </div>
+          )}
           <footer className="page-footer">
             <span>
               <Mountain size={15} />
@@ -1802,7 +1962,7 @@ export default function App() {
             </span>
             <p>Mỗi người một đạo lộ. Mỗi niệm một thế giới.</p>
             <button onClick={() => setDialog(cloud.account ? 'account' : 'settings')}>
-              {cloud.account ? `Bản 1.2 · ${cloud.label}` : 'Bản 1.2 · Lưu cục bộ'}
+              {cloud.account ? `Bản 1.3 · ${cloud.label}` : 'Bản 1.3 · Lưu cục bộ'}
             </button>
           </footer>
         </main>
@@ -1842,6 +2002,7 @@ export default function App() {
           onClose={() => setDialog(null)}
           wide
         >
+          <CurrencyPanel state={s} act={act} />
           <div className="shop-grid">
             {(Object.keys(ITEMS) as ItemId[]).map((id) => (
               <div className="shop-item" key={id}>
@@ -1876,7 +2037,7 @@ export default function App() {
       {dialog === 'realms' && (
         <Modal
           title="Hai mươi cảnh giới tu hành"
-          subtitle="Mỗi cảnh giới gồm Sơ kỳ, Trung kỳ và Đỉnh phong. Đột phá luôn thành công khi đủ tu vi và linh thạch."
+          subtitle="Mỗi cảnh giới gồm Sơ kỳ, Trung kỳ và Đỉnh phong. Đột phá luôn thành công khi đủ tu vi, linh khí và thạch tương ứng với cảnh giới."
           onClose={() => setDialog(null)}
           wide
         >
@@ -1956,6 +2117,74 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {dialog === 'notifications' && (
+        <Modal
+          title="Thông báo tam giới"
+          subtitle="Boss hồi sinh, đạo hữu online và cơ duyên đang chờ."
+          onClose={() => setDialog(null)}
+        >
+          <div className="notification-tools">
+            <button className="text-button" onClick={alerts.markRead}>
+              Đánh dấu tất cả đã đọc
+            </button>
+            <button className="text-button" onClick={() => setDialog('events')}>
+              Nhật ký hành trình
+            </button>
+          </div>
+          <div className="notification-list">
+            {alerts.notifications.length ? (
+              alerts.notifications.map((n) => (
+                <article className={n.read ? 'read' : 'unread'} key={n.id}>
+                  {n.kind === 'boss' ? (
+                    <Flame size={21} />
+                  ) : n.kind === 'online' ? (
+                    <Trophy size={21} />
+                  ) : n.kind === 'quest' ? (
+                    <ScrollText size={21} />
+                  ) : (
+                    <Sparkles size={21} />
+                  )}
+                  <div>
+                    <h3>{n.title}</h3>
+                    <p>{n.text}</p>
+                    <small>
+                      {new Date(n.time).toLocaleString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                      })}
+                    </small>
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        alerts.markRead();
+                        setDialog(null);
+                        moveTo(
+                          n.kind === 'boss' || n.kind === 'online'
+                            ? 'community'
+                            : n.kind === 'quest'
+                              ? 'quests'
+                              : 'dashboard',
+                        );
+                      }}
+                    >
+                      Xem ngay
+                      <ChevronRight size={13} />
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <Empty
+                icon={<Bell size={30} />}
+                title="Tam giới đang yên bình"
+                description="Thông báo sẽ hiện khi có boss, nhiệm vụ hoàn thành hoặc đạo hữu online."
+              />
+            )}
+          </div>
+        </Modal>
+      )}
       {dialog === 'help' && (
         <Modal
           title="Đạo thư nhập môn"
@@ -1967,12 +2196,12 @@ export default function App() {
               {
                 icon: Wind,
                 name: 'Tĩnh tâm tu luyện',
-                text: 'Nhấn tu luyện để tăng tu vi, tốn 3 thể lực mỗi lần. Thể lực tự hồi 2 điểm/phút. Thắp hương để tăng hiệu suất trong 5 phút.',
+                text: 'Bắt đầu ngồi thiền một lần; mỗi đủ 60 giây mới nhận tu vi và linh khí, không tăng khi nhấn lại. Nhận tối đa 2 giờ khi ngoại tuyến. Thắp hương tăng hiệu suất trong 5 phút.',
               },
               {
                 icon: Sparkles,
                 name: 'Củng cố đạo cơ',
-                text: 'Đủ tu vi và linh thạch thì đột phá. Mỗi đại cảnh giới gồm Sơ kỳ, Trung kỳ, Đỉnh phong. Mốc Chân Tiên mở Tiên giới; Chân Thần mở Thần giới.',
+                text: 'Đủ tu vi, linh khí và linh thạch thì đột phá. Mỗi đại cảnh giới gồm Sơ kỳ, Trung kỳ, Đỉnh phong. Mốc Chân Tiên mở Tiên giới; Chân Thần mở Thần giới.',
               },
               {
                 icon: Swords,
@@ -2121,11 +2350,19 @@ export default function App() {
                   : 'Tiến trình đang được tự động lưu'}
               </h3>
               <p>
-                Phiên bản 1.2 · {s.name} · {realmName(s.stage)}
+                Phiên bản 1.3 · {s.name} · {realmName(s.stage)}
               </p>
             </div>
           </div>
           <div className="settings-actions">
+            <button onClick={appearance.toggle}>
+              {appearance.theme === 'dark' ? <Sun size={21} /> : <Moon size={21} />}
+              <span>
+                <strong>Giao diện {appearance.theme === 'dark' ? 'tối' : 'sáng'}</strong>
+                <small>Nhấn để đổi và ghi nhớ trên thiết bị</small>
+              </span>
+              <ChevronRight size={17} />
+            </button>
             <button onClick={() => setDialog('account')}>
               <MonitorSmartphone size={21} />
               <span>

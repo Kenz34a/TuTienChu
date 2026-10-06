@@ -33,7 +33,10 @@ try {
       origin: location.origin,
     })),
   ).toEqual({ platform: 'pc', nodeAccess: 'undefined', origin: 'vantien://app' });
+  await page.clock.install();
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
+  await page.clock.fastForward(60000);
+  await page.getByRole('button', { name: /Xuất định/ }).click();
   const load = () => page.evaluate(() => JSON.parse(localStorage.getItem('van-tien-ky.save.v1')));
   expect((await load()).metrics.meditations).toBe(1);
   await page.reload();
@@ -42,7 +45,7 @@ try {
   await app.evaluate(({ dialog }, path) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
   }, backup);
-  await page.getByRole('button', { name: 'Bản 1.2 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.3 · Lưu cục bộ' }).click();
   await page
     .getByRole('dialog')
     .getByRole('button', { name: /Xuất bản lưu/ })
@@ -86,7 +89,10 @@ try {
       )
       .toBe(1);
     await web.getByRole('button', { name: 'Đóng', exact: true }).click();
+    await web.clock.install({ time: await page.evaluate(() => Date.now()) });
     await web.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
+    await web.clock.fastForward(60000);
+    await web.getByRole('button', { name: /Xuất định/ }).click();
     await web.getByRole('button', { name: 'Tài khoản & đồng bộ', exact: true }).click();
     await web.getByRole('button', { name: 'Đồng bộ ngay', exact: true }).click();
     await expect(web.getByRole('status').filter({ hasText: 'Đã đồng bộ' })).toBeVisible();

@@ -60,6 +60,142 @@ async function fixture(path = ':memory:', clock?: () => number, pcPath?: string)
   return { request, register, close, base };
 }
 describe('shared web and Android accounts', () => {
+  it('ranks actual saved characters and expires online presence without exposing credentials', async () => {
+    let time = Date.UTC(2026, 9, 7, 8);
+    const f = await fixture(':memory:', () => time),
+      a = await f.register('low_player'),
+      b = await f.register('high_player');
+    const low = initialState(time);
+    low.name = 'Thanh Trúc';
+    const high = initialState(time);
+    high.name = 'Tinh Hà';
+    high.stage = 27;
+    await f.request('/api/save', a.token, { revision: 0, state: low }, 'PUT');
+    await f.request('/api/save', b.token, { revision: 0, state: high }, 'PUT');
+    let board = (await f.request('/api/community', a.token)).data;
+    expect(board.ranking.map((p: any) => p.name)).toEqual(['Tinh Hà', 'Thanh Trúc']);
+    expect(board.onlineCount).toBe(2);
+    expect(board.topOnline[0].name).toBe('Tinh Hà');
+    expect(JSON.stringify(board)).not.toMatch(/password_hash|token_hash|high_player|low_player/);
+    time += 121000;
+    board = (await f.request('/api/community', a.token)).data;
+    expect(board.onlineCount).toBe(1);
+    expect(board.topOnline[0].name).toBe('Thanh Trúc');
+    await f.request('/api/logout', a.token, {});
+    expect((await f.request('/api/community')).data.onlineCount).toBe(0);
+  });
+  it('shares world boss HP, applies per-account cooldown, respawns, and awards each participant only once', async () => {
+    let time = Date.UTC(2026, 9, 7, 8);
+    const f = await fixture(':memory:', () => time),
+      a = await f.register('boss_player'),
+      b = await f.register('second_player');
+    const s = initialState(time);
+    s.stage = 59;
+    s.name = 'Đạo Chủ';
+    await f.request('/api/save', a.token, { revision: 0, state: s }, 'PUT');
+    await f.request('/api/save', b.token, { revision: 0, state: s }, 'PUT');
+    let boss = (await f.request('/api/community', a.token)).data.bosses[0];
+    expect(boss.active).toBe(true);
+    expect(
+      (await f.request('/api/community/boss/world-earth/attack', undefined, { cycle: boss.cycle }))
+        .status,
+    ).toBe(401);
+    expect(
+      (
+        await f.request('/api/community/boss/world-earth/attack', a.token, {
+          cycle: boss.cycle + 1,
+        })
+      ).status,
+    ).toBe(409);
+    const hit = await f.request('/api/community/boss/world-earth/attack', a.token, {
+      cycle: boss.cycle,
+    });
+    expect(hit.status).toBe(200);
+    expect(hit.data.hp).toBeLessThan(boss.hp);
+    expect(
+      (await f.request('/api/community/boss/world-earth/attack', a.token, { cycle: boss.cycle }))
+        .status,
+    ).toBe(429);
+    expect((await f.request('/api/community', b.token)).data.bosses[0].hp).toBe(hit.data.hp);
+    await f.request('/api/community/boss/world-earth/attack', b.token, { cycle: boss.cycle });
+    for (let i = 0; i < 25; i++) {
+      time += 5000;
+      const h = await f.request('/api/community/boss/world-earth/attack', a.token, {
+        cycle: boss.cycle,
+      });
+      if (h.data.defeated) break;
+    }
+    expect((await f.request('/api/community', a.token)).data.bosses[0].hp).toBe(0);
+    const before = (await f.request('/api/save', a.token)).data;
+    expect(
+      (
+        await f.request('/api/community/boss/world-earth/claim', a.token, {
+          cycle: boss.cycle,
+          revision: 0,
+        })
+      ).status,
+    ).toBe(409);
+    const claim = await f.request('/api/community/boss/world-earth/claim', a.token, {
+      cycle: boss.cycle,
+      revision: before.revision,
+    });
+    expect(claim.status).toBe(200);
+    expect(claim.data.revision).toBe(before.revision + 1);
+    expect(claim.data.state.worldBossClaims).toBe(1);
+    expect(claim.data.state.stones).toBeGreaterThan(before.state.stones);
+    expect(
+      (
+        await f.request('/api/community/boss/world-earth/claim', a.token, {
+          cycle: boss.cycle,
+          revision: claim.data.revision,
+        })
+      ).status,
+    ).toBe(409);
+    time = Date.UTC(2026, 9, 7, 9);
+    const next = (await f.request('/api/community', b.token)).data;
+    expect(next.bosses[0].active).toBe(true);
+    expect(next.bosses[0].hp).toBe(next.bosses[0].maxHp);
+    expect(next.bosses[0].cycle).not.toBe(boss.cycle);
+    expect(next.rewards).toHaveLength(1);
+    expect(
+      (
+        await f.request('/api/community/boss/world-earth/claim', b.token, {
+          cycle: boss.cycle,
+          revision: 1,
+        })
+      ).status,
+    ).toBe(200);
+  });
+  it('preserves shared boss HP and attack cooldown across server restarts', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'van-tien-boss-restart-'));
+    cleanups.unshift(async () => rmSync(dir, { recursive: true, force: true }));
+    const path = join(dir, 'boss.sqlite');
+    const time = Date.UTC(2026, 9, 7, 8);
+    const first = await fixture(path, () => time);
+    const account = await first.register();
+    await first.request(
+      '/api/save',
+      account.token,
+      { revision: 0, state: initialState(time) },
+      'PUT',
+    );
+    const boss = (await first.request('/api/community', account.token)).data.bosses[0];
+    const hit = await first.request('/api/community/boss/world-earth/attack', account.token, {
+      cycle: boss.cycle,
+    });
+    expect(hit.status).toBe(200);
+    await first.close();
+    const restarted = await fixture(path, () => time);
+    const restored = (await restarted.request('/api/community', account.token)).data.bosses[0];
+    expect(restored.hp).toBe(hit.data.hp);
+    expect(
+      (
+        await restarted.request('/api/community/boss/world-earth/attack', account.token, {
+          cycle: boss.cycle,
+        })
+      ).status,
+    ).toBe(429);
+  });
   it('serves the configured PC package and returns 404 when it is unavailable', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'van-tien-download-'));
     cleanups.unshift(async () => rmSync(dir, { recursive: true, force: true }));

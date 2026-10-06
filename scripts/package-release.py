@@ -13,7 +13,7 @@ with zipfile.ZipFile(apk) as archive:
         if file.is_file():
             assert archive.read('assets/public/' + file.relative_to(root / 'dist').as_posix()) == file.read_bytes(), f'Stale APK asset: {file}'
 files = set()
-for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-build', 'android', 'desktop']:
+for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-build', 'android', 'desktop', 'docs']:
     for file in (root / name).rglob('*'):
         if not file.is_file() or "__pycache__" in file.parts:
             continue
@@ -26,7 +26,7 @@ for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-buil
 for name in ['package.json', 'package-lock.json', 'README.md', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'capacitor.config.ts', 'Dockerfile', '.dockerignore', '.gitignore', '.env.example', '.nvmrc', '.prettierrc.json', '.prettierignore']:
     files.add(Path(name))
 files.add(apk.relative_to(root))
-guide = '''VÂN TIÊN KÝ 1.2 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
+guide = '''VÂN TIÊN KÝ 1.3 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
 
 PC WINDOWS: tải gói riêng van-tien-ky-pc-windows.zip. Giải nén toàn bộ,
 mở VanTienKy-win32-x64/VanTienKy.exe. Dành cho Windows 10/11 64-bit.
@@ -36,6 +36,7 @@ Sao chép ZIP Windows vào release/ của máy chủ nếu muốn nút tải PC 
 
 ANDROID: mở release/van-tien-ky-android.apk trên Android 7.0 trở lên.
 Đây là APK thử nghiệm ký bằng khóa phát triển, chưa phát hành Google Play.
+Nếu không thể cập nhật do khác chữ ký, xuất bản lưu/đồng bộ trước khi gỡ bản cũ.
 App có sẵn game, chơi được ngoại tuyến. Để đồng bộ: mở Tài khoản & đồng bộ,
 nhập địa chỉ HTTPS của website game rồi dùng cùng tài khoản trên web/app.
 Chưa thử cài trên thiết bị Android thật; APK đã build và xác minh chữ ký.
@@ -55,6 +56,10 @@ SQLite trong DATA_DIR (mặc định var/). Phải giữ và sao lưu thư mục
 Khi hai bản khác nhau, chọn bản trên tài khoản hoặc trên thiết bị; xuất bản
 lưu dự phòng trước khi chọn nếu muốn giữ cả hai. Không có phục hồi mật khẩu
 qua email trong phiên bản này.
+
+BẢN 1.3: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,
+ba loại thạch, tự lập tông môn, phó bản, sáng/tối, thông báo và thiên bảng.
+Thông báo/online/boss thế giới cần chạy cùng máy chủ; chưa có push nền.
 
 Gói không chứa tài khoản thử nghiệm, bản lưu người chơi hay bí mật môi trường.
 '''

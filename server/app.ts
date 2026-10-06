@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { decodeSave } from '../src/game/storage';
+import { attachCommunity } from './community';
 
 const derive = promisify(scrypt);
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -70,6 +71,7 @@ export function createApp(options: {
   });
   app.use(express.json({ limit: '300kb' }));
   const buckets = new Map<string, { count: number; until: number }>();
+  const presence = new Map<string, { userId: string; seenAt: number }>();
   function throttle(key: string, limit: number) {
     const time = now(),
       old = buckets.get(key);
@@ -98,6 +100,7 @@ export function createApp(options: {
       userId,
       now() + SESSION_DURATION,
     );
+    presence.set(digest(token), { userId, seenAt: now() });
     return { token, user: { id: userId, username }, cloud: cloudSave(userId) };
   };
   const authenticate: express.RequestHandler = (req, res, next) => {
@@ -116,8 +119,10 @@ export function createApp(options: {
       });
     res.locals.user = row;
     res.locals.tokenHash = digest(match![1]);
+    presence.set(res.locals.tokenHash, { userId: (row as { id: string }).id, seenAt: now() });
     next();
   };
+  const community = attachCommunity(app, db, now, authenticate, presence);
   app.get('/api/health', (_req, res) =>
     res.json({
       service: 'van-tien-ky',
@@ -203,6 +208,7 @@ export function createApp(options: {
   app.get('/api/auth/me', authenticate, (_req, res) => res.json({ user: res.locals.user }));
   app.post('/api/logout', authenticate, (_req, res) => {
     db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(res.locals.tokenHash);
+    presence.delete(res.locals.tokenHash);
     res.json({ ok: true });
   });
   app.get('/api/save', authenticate, (_req, res) => res.json(cloudSave(res.locals.user.id)));
@@ -232,6 +238,7 @@ export function createApp(options: {
         message: 'Thiết bị khác đã có tiến trình mới hơn.',
         cloud: cloudSave(res.locals.user.id),
       });
+    community.updateProfile(res.locals.user.id, JSON.parse(encoded));
     return res.json({ revision: row.revision, updatedAt: row.updated_at });
   });
   app.use('/api', (_req, res) =>

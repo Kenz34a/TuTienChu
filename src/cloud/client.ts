@@ -64,7 +64,7 @@ export function defaultServer() {
 export function fingerprint(state: GameState) {
   // Passive regeneration must not create conflicts merely because two devices are idle.
   const { lastTick: _time, hp: _hp, stamina: _stamina, ...progress } = state;
-  return JSON.stringify(progress);
+  return JSON.stringify({ ...progress, training: { active: state.training.active } });
 }
 export function readAccount(): Account | null {
   try {

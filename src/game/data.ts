@@ -1,4 +1,5 @@
 import type { GameState, ItemId, RaceId, Slot, World } from './types';
+import { EXTRA_MAPS, EXTRA_NPCS, EXTRA_QUESTS, EXTRA_SECTS } from './expansion';
 
 export const REALMS = [
   'Luyện Khí',
@@ -312,6 +313,7 @@ export const MAPS: MapData[] = [
     lore: 'Không còn trời, không còn đất. Chỉ có một niệm, và mọi khả năng của vũ trụ.',
   },
 ];
+MAPS.push(...EXTRA_MAPS);
 export const SECTS = [
   {
     id: 'cloud',
@@ -340,6 +342,7 @@ export const SECTS = [
       'Hương đan lan khắp cốc xanh. Tông môn coi trọng sinh mệnh và nghệ thuật luyện đan.',
   },
 ];
+SECTS.push(...EXTRA_SECTS);
 export const NPCS = [
   {
     id: 'elder',
@@ -402,6 +405,7 @@ export const NPCS = [
     reward: 'key' as ItemId,
   },
 ];
+NPCS.push(...EXTRA_NPCS);
 export interface Quest {
   id: string;
   name: string;
@@ -419,7 +423,7 @@ export const QUESTS: Quest[] = [
   {
     id: 'first',
     name: 'Một niệm nhập đạo',
-    description: 'Tĩnh tâm tu luyện 3 lần để cảm nhận linh khí.',
+    description: 'Ngồi thiền đủ 3 phút để cảm nhận linh khí.',
     category: 'main',
     minStage: 0,
     target: 3,
@@ -455,7 +459,7 @@ export const QUESTS: Quest[] = [
   {
     id: 'sect',
     name: 'Tìm một chốn nương thân',
-    description: 'Gia nhập một tông môn trong tam đại tiên tông.',
+    description: 'Gia nhập một tông môn trong cửu đại tiên tông.',
     category: 'main',
     minStage: 0,
     target: 1,
@@ -478,7 +482,7 @@ export const QUESTS: Quest[] = [
   {
     id: 'daily-cultivate',
     name: 'Công khóa mỗi ngày',
-    description: 'Tu luyện 5 lần trong ngày hôm nay.',
+    description: 'Ngồi thiền đủ 5 phút trong ngày hôm nay.',
     category: 'daily',
     minStage: 0,
     target: 5,
@@ -502,7 +506,7 @@ export const QUESTS: Quest[] = [
   {
     id: 'hidden-elder',
     name: 'Lời nhắn trong rừng trúc',
-    description: 'Gặp Vân Hạc Chân Nhân, tu luyện 10 lần.',
+    description: 'Gặp Vân Hạc Chân Nhân, ngồi thiền đủ 10 phút.',
     category: 'hidden',
     minStage: 0,
     target: 10,
@@ -554,6 +558,18 @@ export const QUESTS: Quest[] = [
 ];
 export const questClaimed = (s: GameState, q: Quest) =>
   q.category === 'daily' ? s.daily.claimed.includes(q.id) : s.claimed.includes(q.id);
+QUESTS.push(...EXTRA_QUESTS);
+export const sectInfo = (s: GameState) =>
+  s.sect === 'custom' && s.customSect
+    ? {
+        id: 'custom',
+        name: s.customSect.name,
+        symbol: '宗',
+        motto: 'Đạo tâm đồng hành · Khai sơn lập phái',
+        bonus: `Tu luyện +${s.customSect.buildings.training * 5}% · Sinh lực +${s.customSect.buildings.hall * 3}%`,
+        description: 'Sơn môn do bạn sáng lập.',
+      }
+    : SECTS.find((t) => t.id === s.sect) || null;
 export const sectRank = (contribution: number) =>
   contribution >= 1000
     ? 'Trưởng lão'

@@ -25,7 +25,7 @@ try {
     ...(platform === 'win32'
       ? {
           icon: resolve('desktop/icon.ico'),
-          appVersion: '1.2.0',
+          appVersion: '1.3.0',
           win32metadata: {
             ProductName: 'Vân Tiên Ký',
             FileDescription: 'Game tu tiên chữ',

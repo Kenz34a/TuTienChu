@@ -42,23 +42,23 @@ function winBoss(s: GameState, index = 0) {
 }
 
 describe('Local monster populations', () => {
-  it('has 3 normal and 2 elite species in every map across all 3 worlds', () => {
-    expect(ENEMIES).toHaveLength(60);
-    expect(ALL_ENEMIES).toHaveLength(63);
-    expect(new Set(ALL_ENEMIES.map((enemy) => enemy.id)).size).toBe(63);
+  it('has 5 normal and 3 elite species in every map across all 3 worlds', () => {
+    expect(ENEMIES).toHaveLength(216);
+    expect(ALL_ENEMIES).toHaveLength(246);
+    expect(new Set(ALL_ENEMIES.map((enemy) => enemy.id)).size).toBe(246);
     for (const map of MAPS) {
       expect(
         ENEMIES.filter((enemy) => enemy.mapId === map.id && enemy.kind === 'normal'),
-      ).toHaveLength(3);
+      ).toHaveLength(5);
       expect(
         ENEMIES.filter((enemy) => enemy.mapId === map.id && enemy.kind === 'elite'),
-      ).toHaveLength(2);
+      ).toHaveLength(3);
     }
   });
   it('selects every species and observes the normal/elite boundary', () => {
-    const rolls = [0, 0.3, 0.7, 0.8, 0.99];
+    const rolls = [0, 0.17, 0.33, 0.49, 0.65, 0.8, 0.88, 0.96];
     for (const map of MAPS)
-      expect(new Set(rolls.map((roll) => enemyForMap(map.id, roll).id)).size).toBe(5);
+      expect(new Set(rolls.map((roll) => enemyForMap(map.id, roll).id)).size).toBe(8);
     expect(enemyForMap('bamboo', 0.7999).kind).toBe('normal');
     expect(enemyForMap('bamboo', 0.8).kind).toBe('elite');
   });
@@ -82,7 +82,7 @@ describe('Local monster populations', () => {
     elite.battle!.hp = 1;
     const won = perform(elite, { type: 'fight', move: 'attack' }, () => 0.5, now).state;
     expect(won.stones).toBe(180 + 55);
-    expect(won.xp).toBe(28 + Math.round(xpNeeded(0) * 0.22 * 2.2));
+    expect(won.xp).toBe(28 + Math.round(xpNeeded(0) * 0.08 * 2.2));
     expect(won.inventory.essence).toBe(3);
     expect(won.encounters.eliteKills).toBe(1);
   });

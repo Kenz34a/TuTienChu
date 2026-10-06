@@ -47,7 +47,7 @@ export function AccountPanel({ cloud, state }: { cloud: CloudController; state: 
                 {cloud.conflict.state && realmName(cloud.conflict.state.stage)}
               </span>
               <small>
-                {cloud.conflict.state?.metrics.meditations} lần tu luyện · phiên bản{' '}
+                {cloud.conflict.state?.metrics.meditations} phút thiền · phiên bản{' '}
                 {cloud.conflict.revision}
               </small>
               <small>Thay thế tiến trình trên thiết bị này</small>
@@ -58,7 +58,7 @@ export function AccountPanel({ cloud, state }: { cloud: CloudController; state: 
               <span>
                 {state.name} · {realmName(state.stage)}
               </span>
-              <small>{state.metrics.meditations} lần tu luyện</small>
+              <small>{state.metrics.meditations} phút thiền</small>
               <small>Ghi tiến trình này lên tài khoản</small>
             </button>
           </div>

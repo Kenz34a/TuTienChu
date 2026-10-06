@@ -22,7 +22,20 @@ async function state(page: Page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem('van-tien-ky.save.v1') || '{}'));
 }
 async function meditation(page: Page) {
-  await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
+  const start = page.getByRole('button', { name: /Tĩnh tâm tu luyện/ });
+  if (await start.isVisible()) await start.click();
+  const loaded = page.waitForNavigation({ waitUntil: 'load' });
+  await page.evaluate(() => {
+    const key = 'van-tien-ky.save.v1';
+    const s = JSON.parse(localStorage.getItem(key)!);
+    s.lastTick = Date.now() - 60000;
+    localStorage.setItem(key, JSON.stringify(s));
+    // Reload in the same browser task so the next interval cannot overwrite this
+    // simulated offline interval before the game restores it.
+    location.reload();
+  });
+  await loaded;
+  await page.getByRole('button', { name: /Xuất định/ }).click();
 }
 
 test('shares a character across devices and safely resolves offline changes', async ({

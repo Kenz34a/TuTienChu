@@ -2,11 +2,11 @@
 
 Game tu tiên chữ tiếng Việt, có **web, app PC Windows và app Android (APK) riêng**. PC dùng Electron, Android dùng Capacitor; cả hai đóng gói giao diện và cơ chế game, chơi được ngoại tuyến ngay sau khi cài. Đăng nhập cùng tài khoản để đồng bộ nhân vật, trang bị, ba lô, nhiệm vụ và trận chiến giữa PC, Android và web.
 
-## Tải bản 1.2.0
+## Tải bản 1.3.0
 
-- [App Windows 10/11 64-bit](https://github.com/Kenz34a/TuTienChu/releases/download/v1.2.0/van-tien-ky-pc-windows.zip): giải nén toàn bộ rồi mở `VanTienKy-win32-x64/VanTienKy.exe`.
-- [APK Android 7.0 trở lên](https://github.com/Kenz34a/TuTienChu/releases/download/v1.2.0/van-tien-ky-android.apk).
-- [Gói web và máy chủ đã build](https://github.com/Kenz34a/TuTienChu/releases/download/v1.2.0/van-tien-ky-web-server.zip).
+- [App Windows 10/11 64-bit](https://github.com/Kenz34a/TuTienChu/releases/download/v1.3.0/van-tien-ky-pc-windows.zip): giải nén toàn bộ rồi mở `VanTienKy-win32-x64/VanTienKy.exe`.
+- [APK Android 7.0 trở lên](https://github.com/Kenz34a/TuTienChu/releases/download/v1.3.0/van-tien-ky-android.apk).
+- [Gói web và máy chủ đã build](https://github.com/Kenz34a/TuTienChu/releases/download/v1.3.0/van-tien-ky-web-server.zip).
 - [Tất cả bản phát hành và hướng dẫn](https://github.com/Kenz34a/TuTienChu/releases).
 
 Mã nguồn nằm trong kho Git; các tệp app nằm trong **Releases**, không nằm trong danh sách mã nguồn. Website chơi trực tuyến cần triển khai máy chủ riêng theo hướng dẫn bên dưới; trang GitHub này dùng để xem mã nguồn và tải app.
@@ -74,7 +74,7 @@ Kiểm tra app PC thực tế: `npm run test:pc` sau build web, với backend đ
 
 ## Cài app Android
 
-Tệp **`release/van-tien-ky-android.apk`** dùng trên **Android 7.0 trở lên**. Tải APK, mở tệp và cho phép cài ứng dụng từ nguồn đã tải. Đây là bản APK ký bằng khóa phát triển, chưa phát hành Google Play. Bản phát hành cửa hàng cần khóa ký riêng được giữ an toàn; không đưa khóa vào Git hoặc gửi trong chat.
+Tệp **`release/van-tien-ky-android.apk`** dùng trên **Android 7.0 trở lên**. Tải APK, mở tệp và cho phép cài ứng dụng từ nguồn đã tải. Đây là bản APK ký bằng khóa phát triển, chưa phát hành Google Play. Khóa thử nghiệm của mỗi lần build GitHub Actions có thể khác nhau: nếu Android báo không thể cập nhật bản cũ, hãy **xuất bản lưu hoặc đồng bộ trước**, rồi gỡ bản cũ, cài bản mới và nhập lại/đăng nhập. Bản phát hành cửa hàng cần khóa ký riêng được giữ an toàn; không đưa khóa vào Git hoặc gửi trong chat.
 
 Trong app: mở **Tài khoản & đồng bộ**, nhập **địa chỉ HTTPS của website game**, rồi đăng nhập hoặc tạo tài khoản. Trên web dùng cùng tài khoản. Nếu chưa có website, vẫn chơi ngoại tuyến; sau khi triển khai website, nhập địa chỉ và liên kết nhân vật. Có thể đặt sẵn địa chỉ bằng `VITE_API_URL` lúc build APK.
 
@@ -92,24 +92,32 @@ Bản web vẫn có thể cài PWA trên Chrome/Edge hoặc Safari. Cache ngoạ
 ## Tài khoản và đồng bộ
 
 - Tên tài khoản gồm 3–24 chữ không dấu, số hoặc `_`; mật khẩu 10–128 ký tự. Mật khẩu được băm bằng scrypt và salt riêng; máy chủ chỉ lưu hash token. Phiên đăng nhập có hạn 30 ngày, đăng xuất thu hồi phiên thiết bị hiện tại.
-- Game tự lưu trên thiết bị và kiểm tra đồng bộ mỗi 2 giây. Thiết bị đang rảnh kiểm tra bản mới trên máy chủ mỗi 15 giây; có nút **Đồng bộ ngay** trước khi chuyển thiết bị. Hồi phục thụ động đơn thuần không tạo xung đột.
+- Game tự lưu trên thiết bị và kiểm tra đồng bộ mỗi 2 giây. Thiết bị đang rảnh kiểm tra bản mới trên máy chủ mỗi 15 giây; có nút **Đồng bộ ngay** trước khi chuyển thiết bị. Hồi phục thụ động và mỗi giây đếm thiền không tạo xung đột; tu vi và linh khí mới kiếm được vẫn được đồng bộ.
 - Đăng nhập tài khoản đã có nhân vật luôn cho chọn dùng bản trên tài khoản hoặc bản trên thiết bị. Ghi bản lưu cần đúng số phiên bản; nếu thiết bị khác đã lưu, máy chủ trả bản mới và tạm dừng đồng bộ để bạn chọn. Không tự ghi đè bản mới bằng bản cũ.
 - Khi offline, tiếp tục chơi và lưu cục bộ; khi kết nối lại, đồng bộ bản chờ, kể cả sau khi mở lại ứng dụng. Tránh chơi hai tab trên **cùng một trình duyệt** vì chúng dùng chung bộ lưu cục bộ.
-- Chưa có khôi phục mật khẩu qua email. Hãy giữ mật khẩu và xuất bản lưu dự phòng. Tài khoản chỉ đồng bộ game chơi đơn; chưa có PvP, giao dịch giữa người chơi hay hệ thống chống gian lận.
+- Chưa có khôi phục mật khẩu qua email. Hãy giữ mật khẩu và xuất bản lưu dự phòng. Thiên bảng xếp nhân vật thật theo tu vi, tu vi tích lũy và chiến lực; top online tính phiên hoạt động trong hai phút. Boss thế giới chia sẻ sinh lực trên máy chủ. Chưa có PvP, giao dịch giữa người chơi hay hệ thống chống gian lận.
 
 ## Hệ thống game
 
 - **20 cảnh giới × 3 giai đoạn:** Luyện Khí, Trúc Cơ, Kim Đan, Nguyên Anh, Hóa Thần, Luyện Hư, Hợp Thể, Đại Thừa, Độ Kiếp, Chân Tiên, Huyền Tiên, Kim Tiên, Thái Ất, Đại La, Tiên Vương, Tiên Đế, Chân Thần, Thiên Thần, Thần Vương, Thần Đế. Mỗi cảnh giới có Sơ kỳ, Trung kỳ và Đỉnh phong.
-- **Tam giới, 12 địa điểm:** Địa Giới từ Luyện Khí; Tiên Giới mở ở Chân Tiên; Thần Giới mở ở Chân Thần. Mỗi địa điểm có yêu quái, phẩm tu vi và đoạn truyện riêng.
+- **Tam giới, 27 địa điểm (9 map mỗi giới):** Địa Giới từ Luyện Khí; Tiên Giới mở ở Chân Tiên; Thần Giới mở ở Chân Thần. Mỗi địa điểm có yêu quái, phẩm tu vi và đoạn truyện riêng.
 - **Chiến đấu theo lượt:** công kích, Lưu Vân Quyết (sát thương ×2,2, hồi 3 lượt), phòng ngự (giảm 70% sát thương), uống đan và rút lui. Thắng trận nhận tu vi, linh thạch, nguyên liệu và cơ hội nhận trang bị; bại trận mất 5% linh thạch.
-- **Quần thể yêu quái:** mỗi khu vực có 3 loại quái thường và 2 loại tinh anh, tổng cộng 36 quái thường + 24 tinh anh. 70% lượt khám phá gặp quái; trong các trận đó, 80% gặp quái thường, 20% tinh anh. Danh sách yêu quái tại mỗi map hiển thị tên, tu vi và những loài đã gặp. Tinh anh có sinh lực ×1,65, công kích ×1,3, phòng thủ ×1,4; chiến lợi phẩm ×2,2, luôn có tinh hoa, 75% cơ hội rơi trang bị và 18% rơi Cổ ngọc.
+- **Quần thể yêu quái:** mỗi khu vực có 5 loại quái thường và 3 loại tinh anh, tổng cộng 135 quái thường + 81 tinh anh; thêm 27 đối thủ phó bản và 3 boss ẩn. 70% lượt khám phá gặp quái; trong các trận đó, 80% gặp quái thường, 20% tinh anh. Danh sách yêu quái tại mỗi map hiển thị tên, tu vi và những loài đã gặp. Tinh anh có sinh lực ×1,65, công kích ×1,3, phòng thủ ×1,4; chiến lợi phẩm ×2,2, luôn có tinh hoa, 75% cơ hội rơi trang bị và 18% rơi Cổ ngọc.
 - **Bí cảnh và boss ẩn:** mỗi giới có một bí cảnh, tự phát hiện sau 5 lần xuất hành tại các khu vực thuộc giới đó. Vô Danh Cổ Động (Kim Đan Sơ kỳ) có U Minh Lang Vương; Đào Nguyên Cấm Cảnh (Kim Tiên Sơ kỳ) có Cửu U Tiên Long; Táng Thần Mật Vực (Thiên Thần Sơ kỳ) có Thôn Thiên Cổ Thần. Khiêu chiến cần 1 Cổ ngọc, 16 thể lực và ít nhất 50% sinh lực. Cổ ngọc tiêu hao ngay khi vào, không hoàn lại khi rút lui/bại trận. Boss tăng 30% công kích một lần khi còn 35% sinh lực. Phần thưởng mỗi boss chỉ nhận một lần: chiến lợi phẩm ×6, trang bị phẩm cao chắc chắn, 3 tinh hoa và 2 Tụ Linh Đan. Nếu ba lô đầy, trang bị rơi được đổi thành tinh hoa.
 - **7 vị trí trang bị:** áo, mũ, quần, giày, nhẫn, găng tay, vòng cổ. **9 phẩm:** Phàm, Linh, Pháp, Bảo, Linh bảo, Đạo, Tiên, Thần, Hỗn Độn. Cường hóa đến +10; phân giải để lấy tinh hoa.
 - Ba lô **120 ô** gồm 114 ô trang bị và 6 ô vật phẩm xếp chồng dành riêng cho nguyên liệu, đan dược và cổ ngọc; phần thưởng vật phẩm luôn có chỗ nhận.
-- **Nhiệm vụ:** 24 nhiệm vụ chính theo cảnh giới và hoạt động; 2 nhiệm vụ hằng ngày; 4 cơ duyên ẩn được khám phá qua NPC, hành trình và cống hiến. Nhiệm vụ hằng ngày làm mới lúc 00:00 theo `Asia/Ho_Chi_Minh`.
+- **Nhiệm vụ:** 68 nhiệm vụ: 58 nhiệm vụ chính, 3 nhiệm vụ hằng ngày và 7 cơ duyên ẩn, gồm khám phá map, phó bản, bí kíp, linh căn, truyền thừa và tự lập tông môn. Nhiệm vụ hằng ngày làm mới lúc 00:00 theo `Asia/Ho_Chi_Minh`.
 - **5 chủng tộc:** Nhân, Linh, Long, Hồ và Cổ tộc, với bonus chỉ số khác nhau. Huyết mạch chỉ chọn một lần; đạo hiệu đổi được.
-- **5 NPC:** hội thoại và đổi vật phẩm; **3 tông môn:** Thanh Vân Tông, Vạn Kiếm Sơn, Bích Liên Cốc, mỗi tông môn có gia trì riêng và 4 cấp thân phận.
+- **20 NPC:** hội thoại, cơ duyên và đổi vật phẩm; **9 tông môn** với gia trì riêng và 4 cấp thân phận. **Tự khai sơn lập phái** từ Trúc Cơ: đặt tên, đóng góp ngân khố, nâng đại điện/động phủ/đan phòng đến cấp 10 và chiêu mộ đệ tử NPC. Tông môn tự lập vẫn được giữ khi rời tông.
 - **Luyện đan, đúc pháp khí, thương hội**, Tụ Linh Hương và nghỉ tại khách điếm. Trang bị chế tạo tăng phẩm theo tu vi. Thể lực tự hồi 2 điểm/phút, sinh lực hồi đầy trong 10 phút khi không chiến đấu; hồi phục sau khi rời game tính tối đa 8 giờ.
+- **Ngồi thiền liên tục:** bấm bắt đầu/dừng; mỗi đủ 60 giây nhận 3% tu vi cần lên giai đoạn × gia trì tu luyện và linh khí. Không cộng tu vi ngay khi bấm. Giữ phần giây lẻ khi dừng hoặc mở lại; tích lũy ngoại tuyến tối đa 2 giờ. Đột phá cần tu vi, linh khí và thạch; cảnh giới tiên/thần yêu cầu tiền tệ tương ứng. Tụ Linh Hương tăng hiệu quả thiền 20% trong thời gian còn tác dụng.
+- **Ba loại tiền tệ:** linh thạch, tiên thạch, thần thạch; đổi hai chiều tại thương hội, 1.000 linh = 1 tiên, 1.000 tiên = 1 thần. Quái, khám phá và nhiệm vụ ở tiên/thần giới thưởng thạch đúng giới; dùng cho bí kíp, truyền thừa và đột phá bậc cao.
+- **15 bí kíp:** tham ngộ đến cấp 10, vận dụng tối đa 3 đạo pháp; tăng công, thủ, sinh lực hoặc hiệu quả thiền.
+- **10 linh căn:** ngũ hành, Băng, Phong, Lôi, Thiên và Hỗn Độn. Kiểm tra một lần, tẩy luyện đến cấp 10; Hỗn Độn mở qua truyền thừa Thái Sơ. **9 truyền thừa** đòi hỏi khám phá, thiền, bí kíp hoặc vượt phó bản, nhận gia trì vĩnh viễn một lần.
+- **9 phó bản:** mỗi phó bản 3 cửa chiến đấu, giữ sinh lực giữa các cửa và lưu cả trận đang đánh. Tốn 18 thể lực, cần 50% sinh lực; hồi 30 phút từ lúc vào, kể cả rút lui hoặc bại trận. Vượt đủ ba cửa nhận linh khí, trang bị và vật phẩm.
+- **Cộng đồng:** thiên bảng top 100, top online và 3 boss thế giới hồi sinh mỗi giờ vào phút 00/20/40, tồn tại 15 phút. Công kích hồi 5 giây theo tài khoản; sinh lực và đóng góp giữ trong SQLite qua lần khởi động lại. Thưởng mỗi chu kỳ nhận một lần, còn nhận được trong 7 ngày. Cần kết nối cùng máy chủ và đồng bộ trước khi tham gia.
+- **Thông báo trong game:** boss hồi sinh, top online lúc vào, nhiệm vụ sẵn nhận và đủ tài nguyên đột phá; có trạng thái chưa đọc, giữ tối đa 50 tin. Hiển thị khi đang mở game; chưa có push khi đã đóng app.
+- **Giao diện sáng/tối** lưu lựa chọn; tranh SVG tu sĩ, biểu tượng bí kíp/linh căn/NPC và bố cục tương thích điện thoại.
 - Nhật ký 60 sự kiện, đạo thư hướng dẫn, thành tựu, xuất/nhập bản lưu và xác nhận trước khi bắt đầu lại.
 
 ## Lưu tiến trình và cấu trúc
@@ -118,7 +126,7 @@ Bản lưu thiết bị ở `localStorage` với khóa `van-tien-ky.save.v1`. V�
 
 Bản lưu nhập vào được kiểm tra phiên bản, chỉ số, ID vật phẩm, ID trang bị, nhiệm vụ và trạng thái trận chiến. Bản lưu cũ lỗi sẽ được giữ nguyên và chặn ghi đè tự động để người chơi có thể xuất trước khi xử lý.
 
-Bản cập nhật yêu quái tương thích với bản lưu v1 trước đây, kể cả trận chiến đang diễn ra. Lịch sử khám phá cũ chỉ có danh sách địa điểm, nên mỗi địa điểm đã đến được tính là một lần xuất hành cho cơ chế bí cảnh mới; các chỉ số và vật phẩm cũ được giữ nguyên.
+Bản 1.3 tương thích với bản lưu v1 trước đây, kể cả trận chiến đang diễn ra; thêm mặc định cho linh khí, thiền, linh căn, truyền thừa, bí kíp, ví và tông môn tự lập, giữ nhân vật/trang bị/nhiệm vụ cũ. Lịch sử khám phá cũ chỉ có danh sách địa điểm, nên mỗi địa điểm đã đến được tính là một lần xuất hành cho cơ chế bí cảnh mới; các chỉ số và vật phẩm cũ được giữ nguyên.
 
 ```text
 src/game/          Dữ liệu và cơ chế tu tiên, kiểm tra bản lưu, kiểm thử
