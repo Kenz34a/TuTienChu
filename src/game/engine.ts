@@ -13,11 +13,12 @@ import {
   xpNeeded,
 } from './data';
 import type { Action, GameState, Gear, ItemId, Result, Stats } from './types';
+import { collectTitles, equippedTitle, TITLES, titleUnlocked } from './titles';
+import { BREAKTHROUGH_PATHS, breakthroughRequirements } from './progression';
 import {
   DUNGEONS,
   EXTRA_SECTS,
   MANUALS,
-  qiCost,
   sectBuildCost,
   studyCost,
   SPIRITUAL_ROOTS,
@@ -88,6 +89,7 @@ export function initialState(now = Date.now()): GameState {
     worldBossClaims: 0,
     spiritualRoot: null,
     inheritances: [],
+    titles: { owned: [], equipped: null, effects: true },
     events: [
       {
         id: 1,
@@ -157,12 +159,17 @@ export function stats(s: GameState): Stats {
     if (item.attribute === 'health') maxHp *= 1 + item.bonus;
     if (item.attribute === 'cultivation') cultivation *= 1 + item.bonus;
   }
+  const honor = equippedTitle(s);
+  if (honor?.attribute === 'attack') attack *= 1 + honor.bonus;
+  if (honor?.attribute === 'defense') defense *= 1 + honor.bonus;
+  if (honor?.attribute === 'health') maxHp *= 1 + honor.bonus;
+  if (honor?.attribute === 'cultivation') cultivation *= 1 + honor.bonus;
   return {
     maxHp: Math.round(maxHp),
     attack: Math.round(attack),
     defense: Math.round(defense),
     cultivation,
-    crit: s.race === 'fox' ? 0.25 : 0.1,
+    crit: (s.race === 'fox' ? 0.25 : 0.1) + (honor?.attribute === 'crit' ? honor.bonus : 0),
   };
 }
 // Six permanent stack slots prevent material rewards from overflowing a full gear bag.
@@ -193,6 +200,23 @@ export function perform(
   const s: GameState = structuredClone(original);
   const fail = (message: string): Result => ({ state: original, message, ok: false });
   const done = (message?: string, type: 'story' | 'gain' | 'battle' | 'realm' = 'gain'): Result => {
+    const earned = collectTitles(s);
+    if (earned.length) {
+      s.events = [
+        {
+          id: (s.events[0]?.id || 0) + 1,
+          text: `Danh hiệu thức tỉnh: ${
+            earned
+              .slice(0, 3)
+              .map((t) => t.name)
+              .join(' · ') + (earned.length > 3 ? ` và ${earned.length - 3} danh hiệu khác` : '')
+          }. Mở Danh hiệu để trang bị gia trì.`,
+          type: 'realm' as const,
+          time: now,
+        },
+        ...s.events,
+      ].slice(0, 60);
+    }
     s.hp = Math.min(s.hp, stats(s).maxHp);
     if (message)
       s.events = [
@@ -228,6 +252,25 @@ export function perform(
   if (s.battle && !['tick', 'fight'].includes(action.type))
     return fail('Hãy kết thúc trận chiến trước khi thực hiện hành động này.');
   switch (action.type) {
+    case 'equip-title': {
+      const honor = TITLES.find((t) => t.id === action.id);
+      if (action.id !== null && (!honor || !titleUnlocked(s, honor)))
+        return fail('Danh hiệu chưa mở khóa. Hãy hoàn thành điều kiện trước khi trang bị.');
+      s.titles.equipped = action.id;
+      return done(
+        honor
+          ? `Mang danh hiệu ${honor.name}. Gia trì đã có hiệu lực.`
+          : 'Đã ẩn danh hiệu và gỡ gia trì.',
+      );
+    }
+    case 'title-effects': {
+      s.titles.effects = action.enabled;
+      return done(
+        action.enabled
+          ? 'Đã bật hiệu ứng danh hiệu.'
+          : 'Đã tắt chuyển động danh hiệu. Gia trì vẫn có hiệu lực.',
+      );
+    }
     case 'exchange-currency': {
       const up = action.direction === 'up';
       const from = action.from;
@@ -364,20 +407,20 @@ export function perform(
       return done('Đã xuất định. Tu vi, linh khí và thời gian tham ngộ được giữ lại.');
     }
     case 'breakthrough': {
-      if (s.stage >= 59) return fail('Bạn đã đạt Thần Đế Đỉnh phong, cảnh giới tối thượng.');
+      const method = action.method || 'meditation';
+      if (!BREAKTHROUGH_PATHS.some((p) => p.id === method))
+        return fail('Phương thức đột phá không hợp lệ.');
+      const requirements = breakthroughRequirements(s, method);
+      if (!requirements.ready) return fail(requirements.message);
       const need = xpNeeded(s.stage),
-        cost = stoneCost(s.stage);
-      if (s.xp < need) return fail(`Còn thiếu ${Math.ceil(need - s.xp)} tu vi để đột phá.`);
-      if (s.stones < cost) return fail(`Cần ${cost} linh thạch để củng cố đạo cơ.`);
-      if (s.lingqi < qiCost(s.stage))
-        return fail(`Cần ${qiCost(s.stage)} linh khí. Hãy ngồi thiền để tích lũy.`);
+        cost = requirements.resources.find((r) => r.id === 'stones')!.need;
       const tier = breakthroughTier(s.stage);
-      if (tier && s.wallet[tier.kind] < tier.amount)
-        return fail(`Cần ${tier.amount} ${tierLabel(tier.kind)} để đột phá ở giới này.`);
       if (tier) s.wallet[tier.kind] -= tier.amount;
       s.xp -= need;
       s.stones -= cost;
-      s.lingqi -= qiCost(s.stage);
+      s.lingqi -= requirements.resources.find((r) => r.id === 'qi')!.need;
+      if (method === 'pill') takeItem(s, 'elixir');
+      if (method === 'array') takeItem(s, 'essence');
       s.stage++;
       s.metrics.breakthroughs++;
       s.hp = stats(s).maxHp;

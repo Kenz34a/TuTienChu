@@ -45,7 +45,7 @@ try {
   await app.evaluate(({ dialog }, path) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
   }, backup);
-  await page.getByRole('button', { name: 'Bản 1.3 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.4 · Lưu cục bộ' }).click();
   await page
     .getByRole('dialog')
     .getByRole('button', { name: /Xuất bản lưu/ })

@@ -3,6 +3,7 @@ import { initialState, stats } from './engine';
 import type { GameState, Gear } from './types';
 import { ALL_ENEMIES, ENEMIES, SECRET_AREAS } from './encounters';
 import { DUNGEONS, MANUALS, SPIRITUAL_ROOTS, INHERITANCES } from './expansion';
+import { TITLES, collectTitles } from './titles';
 
 export const SAVE_KEY = 'van-tien-ky.save.v1';
 const number = (value: unknown, max = 1e12) =>
@@ -103,8 +104,21 @@ export function decodeSave(input: string): GameState {
     'spiritualRoot',
     'inheritances',
     'wallet',
+    'titles',
   ] as const)
     if (v[key] === undefined) v[key] = defaults[key];
+  if (
+    !record(v.titles) ||
+    !list(
+      v.titles.owned,
+      TITLES.map((t) => t.id),
+    ) ||
+    typeof v.titles.effects !== 'boolean' ||
+    (v.titles.equipped !== null &&
+      (typeof v.titles.equipped !== 'string' ||
+        !(v.titles.owned as string[]).includes(v.titles.equipped)))
+  )
+    return invalid();
   if (!record(v.wallet) || !integer(v.wallet.immortal, 1e9) || !integer(v.wallet.divine, 1e9))
     return invalid();
   if (
@@ -328,6 +342,7 @@ export function decodeSave(input: string): GameState {
   if ((dungeons.active !== null) !== (record(v.battle) && v.battle.kind === 'dungeon'))
     return invalid();
   const s = v as unknown as GameState;
+  collectTitles(s);
   s.hp = Math.min(s.hp, stats(s).maxHp);
   s.lastTick = Math.min(s.lastTick, Date.now());
   return s;

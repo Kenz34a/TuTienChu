@@ -3,6 +3,7 @@ export type EnemyKind = 'normal' | 'elite' | 'boss' | 'dungeon';
 export type Slot = 'robe' | 'hat' | 'pants' | 'boots' | 'ring' | 'gloves' | 'necklace';
 export type RaceId = 'human' | 'spirit' | 'dragon' | 'fox' | 'ancient';
 export type ItemId = 'herb' | 'ore' | 'essence' | 'pill' | 'elixir' | 'key';
+export type BreakthroughMethod = 'meditation' | 'pill' | 'array';
 export interface Gear {
   uid: string;
   slot: Slot;
@@ -94,6 +95,7 @@ export interface GameState {
   worldBossClaims: number;
   spiritualRoot: null | { id: string; level: number };
   inheritances: string[];
+  titles: { owned: string[]; equipped: string | null; effects: boolean };
 }
 export interface Stats {
   maxHp: number;
@@ -103,6 +105,8 @@ export interface Stats {
   crit: number;
 }
 export type Action =
+  | { type: 'equip-title'; id: string | null }
+  | { type: 'title-effects'; enabled: boolean }
   | { type: 'meditate' }
   | { type: 'stop-training' }
   | { type: 'study'; id: string }
@@ -116,7 +120,7 @@ export type Action =
   | { type: 'purify-root' }
   | { type: 'inherit'; id: string }
   | { type: 'exchange-currency'; from: 'spirit' | 'immortal' | 'divine'; direction: 'up' | 'down' }
-  | { type: 'breakthrough' }
+  | { type: 'breakthrough'; method?: BreakthroughMethod }
   | { type: 'rest' }
   | { type: 'tick'; now: number }
   | { type: 'explore'; mapId: string }

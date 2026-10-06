@@ -13,6 +13,7 @@ export interface RankedPlayer {
   clears: number;
   online: boolean;
   self: boolean;
+  titleId?: string | null;
 }
 export interface WorldBoss {
   id: string;

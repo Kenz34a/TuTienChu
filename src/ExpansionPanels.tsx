@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { TitleBadge } from './TitlePanel';
+import { TITLES } from './game/titles';
 import {
   BookOpen,
   Castle,
@@ -28,8 +30,10 @@ import {
   studyCost,
   tierCost,
   tierLabel,
+  dungeonClears,
 } from './game/expansion';
-import { realmName, WORLDS } from './game/data';
+import { realmName, sectInfo, WORLDS } from './game/data';
+import { stats } from './game/engine';
 import type { Action, GameState } from './game/types';
 import type { useCommunity } from './cloud/useCommunity';
 
@@ -411,7 +415,27 @@ export function CommunityPanel({
   const [tab, setTab] = useState<'all' | 'online'>('all');
   const data = community.data,
     time = Date.now() + community.clockOffset;
-  const players = tab === 'all' ? data?.ranking : data?.topOnline;
+  const ownStats = stats(s);
+  const players = data
+    ? tab === 'all'
+      ? data.ranking
+      : data.topOnline
+    : tab === 'all'
+      ? [
+          {
+            id: 'device-character',
+            rank: 1,
+            name: s.name,
+            stage: s.stage,
+            power: ownStats.maxHp + ownStats.attack * 5 + ownStats.defense * 3,
+            sect: sectInfo(s)?.name || 'Tán tu',
+            clears: dungeonClears(s),
+            self: true,
+            online: false,
+            titleId: s.titles.equipped,
+          },
+        ]
+      : [];
   return (
     <>
       <div className="expansion-banner panel">
@@ -443,6 +467,12 @@ export function CommunityPanel({
         </button>
       )}
       <section className="panel ranking-panel">
+        {!data && (
+          <p className="local-ranking-note">
+            Đang hiển thị nhân vật trên thiết bị. Đây là bảng cá nhân; kết nối và đăng nhập cùng máy
+            chủ để xem thứ hạng giữa các đạo hữu.
+          </p>
+        )}
         <div className="expansion-heading">
           <h2>Bảng xếp hạng</h2>
           <div className="filter-tabs">
@@ -468,6 +498,11 @@ export function CommunityPanel({
                     {p.self && <span className="tiny-label">Bạn</span>}
                     {p.online && <i className="online-dot" />}
                   </strong>
+                  <TitleBadge
+                    title={TITLES.find((t) => t.id === p.titleId)}
+                    compact
+                    animated={s.titles.effects}
+                  />
                   <span>
                     {realmName(p.stage)} · {p.sect}
                   </span>

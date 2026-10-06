@@ -26,7 +26,7 @@ for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-buil
 for name in ['package.json', 'package-lock.json', 'README.md', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'capacitor.config.ts', 'Dockerfile', '.dockerignore', '.gitignore', '.env.example', '.nvmrc', '.prettierrc.json', '.prettierignore']:
     files.add(Path(name))
 files.add(apk.relative_to(root))
-guide = '''VÂN TIÊN KÝ 1.3 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
+guide = '''VÂN TIÊN KÝ 1.4 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
 
 PC WINDOWS: tải gói riêng van-tien-ky-pc-windows.zip. Giải nén toàn bộ,
 mở VanTienKy-win32-x64/VanTienKy.exe. Dành cho Windows 10/11 64-bit.
@@ -57,9 +57,10 @@ Khi hai bản khác nhau, chọn bản trên tài khoản hoặc trên thiết b
 lưu dự phòng trước khi chọn nếu muốn giữ cả hai. Không có phục hồi mật khẩu
 qua email trong phiên bản này.
 
-BẢN 1.3: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,
+BẢN 1.4: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,
 ba loại thạch, tự lập tông môn, phó bản, sáng/tối, thông báo và thiên bảng.
-Thông báo/online/boss thế giới cần chạy cùng máy chủ; chưa có push nền.
+Thêm 50 danh hiệu, cẩm nang 20 cảnh giới, 3 phương thức đột phá và chat.
+Chat/online/boss thế giới cần chạy cùng máy chủ; chưa có push nền.
 
 Gói không chứa tài khoản thử nghiệm, bản lưu người chơi hay bí mật môi trường.
 '''

@@ -6,6 +6,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { decodeSave } from '../src/game/storage';
 import { attachCommunity } from './community';
+import { attachChat } from './chat';
 
 const derive = promisify(scrypt);
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -123,6 +124,7 @@ export function createApp(options: {
     next();
   };
   const community = attachCommunity(app, db, now, authenticate, presence);
+  attachChat(app, db, now, authenticate);
   app.get('/api/health', (_req, res) =>
     res.json({
       service: 'van-tien-ky',

@@ -74,7 +74,7 @@ export function attachCommunity(
     const online = new Set([...presence.values()].map((p) => p.userId));
     const rows = db
       .prepare(
-        'SELECT user_id, name, stage, power, sect, clears FROM profiles ORDER BY stage DESC, xp DESC, power DESC, user_id LIMIT 100',
+        `SELECT user_id, name, stage, power, sect, clears, (SELECT json_extract(game_json, '$.titles.equipped') FROM saves WHERE user_id=profiles.user_id) AS title_id FROM profiles ORDER BY stage DESC, xp DESC, power DESC, user_id LIMIT 100`,
       )
       .all() as {
       user_id: string;
@@ -83,11 +83,13 @@ export function attachCommunity(
       power: number;
       sect: string;
       clears: number;
+      title_id: string | null;
     }[];
     const ranking = rows.map((p, i) => ({
       rank: i + 1,
       id: p.user_id,
       name: p.name,
+      titleId: p.title_id,
       stage: p.stage,
       power: p.power,
       sect: p.sect,
@@ -97,7 +99,7 @@ export function attachCommunity(
     }));
     const onlineRows = db
       .prepare(
-        'SELECT user_id, name, stage, power, sect, clears FROM profiles ORDER BY stage DESC, xp DESC, power DESC, user_id',
+        `SELECT user_id, name, stage, power, sect, clears, (SELECT json_extract(game_json, '$.titles.equipped') FROM saves WHERE user_id=profiles.user_id) AS title_id FROM profiles ORDER BY stage DESC, xp DESC, power DESC, user_id`,
       )
       .all() as typeof rows;
     const topOnline = onlineRows
@@ -107,6 +109,7 @@ export function attachCommunity(
         rank: i + 1,
         id: p.user_id,
         name: p.name,
+        titleId: p.title_id,
         stage: p.stage,
         power: p.power,
         sect: p.sect,

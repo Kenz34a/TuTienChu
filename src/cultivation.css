@@ -1,0 +1,178 @@
+.guide-intro {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  padding: 26px;
+  margin-bottom: 20px;
+}
+.guide-intro > svg {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.guide-intro h2 {
+  font: 25px var(--serif);
+  margin: 10px 0;
+}
+.guide-intro p,
+.guide-current p {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--body-muted);
+}
+.guide-current {
+  padding: 26px;
+  margin-bottom: 24px;
+  border-color: var(--gold);
+}
+.guide-current h3 {
+  font: 20px var(--serif);
+  margin-bottom: 12px;
+}
+.guide-current > strong {
+  color: var(--green);
+  font-size: 14px;
+}
+.guide-current p {
+  margin: 10px 0;
+}
+.guide-current .button {
+  margin: 5px 0;
+}
+.realm-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.realm-method-card {
+  padding: 22px;
+  min-width: 0;
+}
+.realm-method-card.current {
+  border-color: var(--gold);
+}
+.realm-method-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 19px;
+}
+.realm-method-heading > span {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.realm-method-heading > div {
+  flex: 1;
+}
+.realm-method-heading h3 {
+  font: 21px var(--serif);
+}
+.realm-method-heading small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  margin-top: 5px;
+  color: var(--body-muted);
+}
+.realm-method-heading > svg {
+  color: var(--gold);
+}
+.realm-method-card h4,
+.realm-method-ascent {
+  font-size: 13px;
+  color: var(--green);
+}
+.realm-method-card p {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--body-muted);
+  margin: 8px 0 14px;
+}
+.realm-method-phases {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.realm-method-phases strong {
+  font-size: 11px;
+}
+.realm-method-card details {
+  border-top: 1px solid var(--line);
+  padding-top: 13px;
+  margin-top: 15px;
+}
+.realm-method-card summary {
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.realm-method-card details p {
+  font-size: 10px;
+}
+.breakthrough-path {
+  padding: 10px 24px 0;
+}
+.breakthrough-path label {
+  display: block;
+  font-size: 11px;
+  color: var(--body-muted);
+  margin-bottom: 7px;
+}
+.breakthrough-path select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+}
+.breakthrough-path p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--body-muted);
+  margin-top: 7px;
+}
+.current-breakthrough-method {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 24px;
+  color: var(--ink);
+}
+.current-breakthrough-method svg {
+  flex-shrink: 0;
+  color: var(--gold);
+  margin-top: 2px;
+}
+.current-breakthrough-method strong {
+  font-size: 12px;
+}
+.current-breakthrough-method p {
+  font-size: 11px;
+  color: var(--body-muted);
+  margin-top: 5px;
+  line-height: 1.8;
+}
+@media (max-width: 650px) {
+  .realm-method-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-intro {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .breakthrough-path {
+    padding: 10px 15px 0;
+  }
+  .current-breakthrough-method {
+    margin: 12px 15px;
+  }
+}

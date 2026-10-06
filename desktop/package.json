@@ -1,7 +1,7 @@
 {
   "name": "van-tien-ky-pc",
   "productName": "Vân Tiên Ký",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Game tu tiên chữ trên PC — đồng bộ web và Android",
   "main": "main.cjs",
   "author": "Kenz34a",

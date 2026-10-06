@@ -13,6 +13,7 @@ import {
   CircleHelp,
   Clock3,
   Coins,
+  Crown,
   Compass,
   Download,
   Eye,
@@ -27,6 +28,7 @@ import {
   LockKeyhole,
   Map,
   Menu,
+  MessageCircle,
   MonitorSmartphone,
   Mountain,
   Moon,
@@ -57,6 +59,13 @@ import { useCommunity } from './cloud/useCommunity';
 import { useNotifications } from './useNotifications';
 import { useTheme } from './useTheme';
 import { CurrencyPanel, LineagePanel } from './LineagePanel';
+import { TitleBadge, TitlePanel } from './TitlePanel';
+import { ChatPanel } from './ChatPanel';
+import { CultivationGuide } from './CultivationGuide';
+import './cultivation.css';
+import { equippedTitle } from './game/titles';
+import { BREAKTHROUGH_PATHS, breakthroughRequirements } from './game/progression';
+import { currentRealmMethod } from './game/realmMethods';
 import './expansion.css';
 import {
   CommunityPanel,
@@ -65,7 +74,7 @@ import {
   DungeonsPanel,
   ManualsPanel,
 } from './ExpansionPanels';
-import { qiCost, breakthroughTier, canPayBreakthroughTier, tierLabel } from './game/expansion';
+import { qiCost, breakthroughTier, tierLabel } from './game/expansion';
 import { AccountPanel } from './cloud/AccountPanel';
 import { nativeApp, desktopApp, androidApp } from './cloud/client';
 import {
@@ -91,7 +100,7 @@ import {
 } from './game/data';
 import { bagUsed, gearPower, stats } from './game/engine';
 import { SAVE_KEY } from './game/storage';
-import type { GameState, Gear, ItemId, RaceId, World } from './game/types';
+import type { BreakthroughMethod, GameState, Gear, ItemId, RaceId, World } from './game/types';
 
 type View =
   | 'dashboard'
@@ -104,7 +113,10 @@ type View =
   | 'manuals'
   | 'dungeons'
   | 'community'
-  | 'lineage';
+  | 'lineage'
+  | 'titles'
+  | 'chat'
+  | 'cultivation';
 type Dialog =
   | 'settings'
   | 'help'
@@ -170,6 +182,24 @@ const navigation = [
     label: 'Thiên bảng',
     icon: Trophy,
     subtitle: 'Xếp hạng, top online và boss thế giới',
+  },
+  {
+    id: 'titles' as View,
+    label: 'Danh hiệu',
+    icon: Crown,
+    subtitle: 'Phong hào lưu danh khắp tam giới',
+  },
+  {
+    id: 'chat' as View,
+    label: 'Chat thế giới',
+    icon: MessageCircle,
+    subtitle: 'Truyền âm cùng đạo hữu khắp tam giới',
+  },
+  {
+    id: 'cultivation' as View,
+    label: 'Tu luyện & đột phá',
+    icon: BookOpen,
+    subtitle: 'Pháp môn riêng cho từng cảnh giới',
   },
 ];
 const fmt = (n: number) => Math.floor(n).toLocaleString('vi-VN');
@@ -483,12 +513,15 @@ export default function App() {
     `${cloud.server}:${cloud.account?.username || 'guest'}`,
   );
   const appearance = useTheme();
+  const [breakthroughMethod, setBreakthroughMethod] = useState<BreakthroughMethod>('meditation');
   const currentSect = sectInfo(s);
   const realmCoins = breakthroughTier(s.stage);
+  const breakthrough = breakthroughRequirements(s, breakthroughMethod);
+  const realmMethod = currentRealmMethod(s.stage);
+  const honor = equippedTitle(s);
   const st = stats(s),
     needed = xpNeeded(s.stage),
-    ready =
-      s.xp >= needed && s.lingqi >= qiCost(s.stage) && canPayBreakthroughTier(s) && s.stage < 59;
+    ready = breakthrough.ready;
   const [view, setView] = useState<View>('dashboard');
   const [world, setWorld] = useState<World>('earth');
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -692,6 +725,7 @@ export default function App() {
               <span className="avatar">{raceInfo.symbol}</span>
               <span>
                 <strong>{s.name}</strong>
+                <TitleBadge title={honor} animated={s.titles.effects} compact />
                 <small>
                   {REALMS[Math.floor(s.stage / 3)]} · {STAGES[s.stage % 3]}
                 </small>
@@ -827,6 +861,26 @@ export default function App() {
             </button>
           </div>
 
+          {view === 'dashboard' && (
+            <div className="community-quicklinks" aria-label="Tính năng nổi bật">
+              <button onClick={() => moveTo('community')}>
+                <Trophy size={18} />
+                Bảng xếp hạng
+              </button>
+              <button onClick={() => moveTo('chat')}>
+                <MessageCircle size={18} />
+                Chat thế giới
+              </button>
+              <button onClick={() => moveTo('titles')}>
+                <Crown size={18} />
+                Sổ danh hiệu
+              </button>
+              <button onClick={() => moveTo('cultivation')}>
+                <BookOpen size={18} />
+                Cách đột phá
+              </button>
+            </div>
+          )}
           {view === 'dashboard' && (
             <>
               <section className="hero-card">
@@ -1007,12 +1061,68 @@ export default function App() {
                     </button>
                     <button
                       className={`button ${ready ? 'gold-button' : 'secondary'}`}
-                      onClick={() => act({ type: 'breakthrough' })}
-                      disabled={!ready || s.stones < stoneCost(s.stage)}
+                      onClick={() => act({ type: 'breakthrough', method: breakthroughMethod })}
+                      disabled={breakthrough.maxed || !!s.battle}
+                      aria-describedby="breakthrough-requirements"
                     >
                       <Sparkles size={16} />
                       Đột phá
                     </button>
+                  </div>
+                  <div className="current-breakthrough-method">
+                    <BookOpen size={18} />
+                    <div>
+                      <strong>{realmMethod.name}</strong>
+                      <p>{realmMethod.ascending ? realmMethod.ascent : realmMethod.phases}</p>
+                    </div>
+                  </div>
+                  <div className="breakthrough-path">
+                    <label htmlFor="breakthrough-method">Phương thức đột phá</label>
+                    <select
+                      id="breakthrough-method"
+                      value={breakthroughMethod}
+                      onChange={(e) => setBreakthroughMethod(e.target.value as BreakthroughMethod)}
+                    >
+                      {BREAKTHROUGH_PATHS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p>
+                      {BREAKTHROUGH_PATHS.find((p) => p.id === breakthroughMethod)!.description}
+                    </p>
+                  </div>
+                  <div
+                    className="breakthrough-requirements"
+                    id="breakthrough-requirements"
+                    aria-label="Yêu cầu đột phá"
+                  >
+                    <h4>
+                      {breakthrough.maxed ? 'Đạo lộ viên mãn' : `Đột phá ${realmName(s.stage + 1)}`}
+                    </h4>
+                    {!breakthrough.maxed &&
+                      breakthrough.resources.map((r) => (
+                        <div
+                          key={r.id}
+                          className={`breakthrough-resource ${r.missing ? 'missing' : 'met'}`}
+                        >
+                          <span>{r.label}</span>
+                          <span>
+                            {fmt(r.have)} / {fmt(r.need)}{' '}
+                            {r.missing ? `· Thiếu ${fmt(r.missing)}` : '· Đủ'}
+                          </span>
+                        </div>
+                      ))}
+                    <p>{breakthrough.message}</p>
+                    {!breakthrough.maxed &&
+                      breakthrough.resources.some(
+                        (r) => r.missing && ['stones', 'immortal', 'divine'].includes(r.id),
+                      ) && (
+                        <button className="text-button" onClick={() => moveTo('world')}>
+                          Đi kiếm thạch <ArrowUpRight size={13} />
+                        </button>
+                      )}
                   </div>
                   <div className={`training-status ${s.training.active ? 'active' : ''}`}>
                     <CultivatorArt active={s.training.active} />
@@ -1028,7 +1138,8 @@ export default function App() {
                       </p>
                       <span>
                         <Sparkles size={13} />
-                        {fmt(s.lingqi)} linh khí · Đột phá cần {qiCost(s.stage)}
+                        {fmt(s.lingqi)} linh khí · Đột phá cần{' '}
+                        {breakthrough.resources.find((r) => r.id === 'qi')!.need}
                         {realmCoins ? ` + ${realmCoins.amount} ${tierLabel(realmCoins.kind)}` : ''}
                       </span>
                       <small>
@@ -1806,6 +1917,11 @@ export default function App() {
                   <span className="profile-avatar">{raceInfo.symbol}</span>
                   <Tag color="green">{raceInfo.name}</Tag>
                   <h2>{s.name}</h2>
+                  <TitleBadge title={honor} animated={s.titles.effects} />
+                  <button className="text-button" onClick={() => moveTo('titles')}>
+                    <Crown size={14} />
+                    {honor ? 'Đổi danh hiệu' : 'Chọn danh hiệu'}
+                  </button>
                   <p>{realmName(s.stage)}</p>
                   <div className="profile-stats">
                     {[
@@ -1910,6 +2026,13 @@ export default function App() {
           )}
           {view === 'manuals' && <ManualsPanel state={s} act={act} />}
           {view === 'lineage' && <LineagePanel state={s} act={act} />}
+          {view === 'titles' && <TitlePanel state={s} act={act} />}
+          {view === 'chat' && (
+            <ChatPanel state={s} cloud={cloud} onLogin={() => setDialog('account')} />
+          )}
+          {view === 'cultivation' && (
+            <CultivationGuide state={s} onCultivate={() => moveTo('dashboard')} />
+          )}
           {view === 'dungeons' && <DungeonsPanel state={s} act={act} />}
           {view === 'community' && (
             <CommunityPanel
@@ -1962,7 +2085,7 @@ export default function App() {
             </span>
             <p>Mỗi người một đạo lộ. Mỗi niệm một thế giới.</p>
             <button onClick={() => setDialog(cloud.account ? 'account' : 'settings')}>
-              {cloud.account ? `Bản 1.3 · ${cloud.label}` : 'Bản 1.3 · Lưu cục bộ'}
+              {cloud.account ? `Bản 1.4 · ${cloud.label}` : 'Bản 1.4 · Lưu cục bộ'}
             </button>
           </footer>
         </main>
@@ -2042,6 +2165,16 @@ export default function App() {
           wide
         >
           <div className="realm-list">
+            <button
+              className="button secondary"
+              onClick={() => {
+                setDialog(null);
+                moveTo('cultivation');
+              }}
+            >
+              <BookOpen size={16} />
+              Xem cách đột phá từng tu vi
+            </button>
             {REALMS.map((realm, i) => (
               <div
                 className={`${i === Math.floor(s.stage / 3) ? 'current' : ''} ${i < Math.floor(s.stage / 3) ? 'completed' : ''}`}
@@ -2165,7 +2298,9 @@ export default function App() {
                             ? 'community'
                             : n.kind === 'quest'
                               ? 'quests'
-                              : 'dashboard',
+                              : n.kind === 'title'
+                                ? 'titles'
+                                : 'dashboard',
                         );
                       }}
                     >

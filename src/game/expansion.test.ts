@@ -237,6 +237,7 @@ describe('extended cultivation, content and backward compatibility', () => {
       'dungeons',
       'worldBossClaims',
       'wallet',
+      'titles',
       'spiritualRoot',
       'inheritances',
     ])

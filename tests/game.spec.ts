@@ -79,13 +79,15 @@ test('complete beginner loop: cultivation, quest, gear, alchemy, NPC and sect', 
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  const time = Date.now();
+  await page.clock.install({ time });
+  await page.clock.pauseAt(time + 1000);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Hôm nay, tiến thêm một bước.' })).toBeVisible();
-  await page.clock.install();
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
   await page.clock.fastForward(3 * 60000);
   await page.getByRole('button', { name: 'Nhận', exact: true }).first().click();
-  await page.clock.fastForward(8 * 60000);
+  await page.clock.fastForward(20 * 60000);
   await page.getByRole('button', { name: 'Đột phá', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Luyện Khí Trung kỳ');
   const nav = page
@@ -214,7 +216,7 @@ test('responsive layout, navigation, and destructive action confirmation', async
 test('export, invalid import protection, and valid import work on the device', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
-  await page.getByRole('button', { name: 'Bản 1.3 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.4 · Lưu cục bộ' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Xuất bản lưu/ }).click();
   const download = await downloadPromise;
@@ -261,6 +263,9 @@ test('every screen stays within the viewport and race bonuses update', async ({ 
     'Bí kíp',
     'Phó bản',
     'Thiên bảng',
+    'Danh hiệu',
+    'Chat thế giới',
+    'Tu luyện & đột phá',
     'Linh căn & truyền thừa',
   ]) {
     if (await page.getByRole('button', { name: 'Mở menu' }).isVisible())

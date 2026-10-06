@@ -60,6 +60,95 @@ async function fixture(path = ':memory:', clock?: () => number, pcPath?: string)
   return { request, register, close, base };
 }
 describe('shared web and Android accounts', () => {
+  it('shares authenticated world chat with canonical character names and titles, cooldown and realm gates', async () => {
+    let time = Date.now();
+    const f = await fixture(':memory:', () => time),
+      a = await f.register('chat_sender'),
+      b = await f.register('chat_reader');
+    const s = initialState(time);
+    s.name = 'Kiếm Tâm';
+    s.stage = 6;
+    s.titles = { owned: ['realm-golden'], equipped: 'realm-golden', effects: true };
+    await f.request('/api/save', a.token, { revision: 0, state: s }, 'PUT');
+    expect((await f.request('/api/chat', undefined, { body: 'hello', world: 'all' })).status).toBe(
+      401,
+    );
+    expect((await f.request('/api/chat', b.token, { body: 'hello', world: 'all' })).status).toBe(
+      409,
+    );
+    expect((await f.request('/api/chat', a.token, { body: 'hello', world: 'divine' })).status).toBe(
+      403,
+    );
+    for (const body of ['', 'a'.repeat(201)])
+      expect((await f.request('/api/chat', a.token, { body, world: 'all' })).status).toBe(400);
+    const text = '<script>alert(1)</script> Đạo hữu 😀';
+    expect(
+      (
+        await f.request('/api/chat', a.token, {
+          body: text,
+          world: 'all',
+          name: 'Giả mạo',
+          stage: 59,
+        })
+      ).status,
+    ).toBe(201);
+    expect((await f.request('/api/chat', a.token, { body: 'spam', world: 'all' })).status).toBe(
+      429,
+    );
+    const feed = (await f.request('/api/chat?world=all', b.token)).data;
+    expect(feed.messages).toHaveLength(1);
+    expect(feed.messages[0]).toMatchObject({
+      name: 'Kiếm Tâm',
+      stage: 6,
+      titleId: 'realm-golden',
+      body: text,
+      self: false,
+    });
+    expect(JSON.stringify(feed)).not.toMatch(/chat_sender|chat_reader|token|password/);
+    expect((await f.request('/api/chat?world=earth')).data.messages).toHaveLength(0);
+    expect((await f.request('/api/chat?world=not-a-world')).status).toBe(400);
+    time += 3000;
+    expect(
+      (await f.request('/api/chat', a.token, { body: 'Lời chào Địa giới', world: 'earth' })).status,
+    ).toBe(201);
+    expect((await f.request('/api/chat?world=earth', a.token)).data.messages[0].self).toBe(true);
+  });
+  it('keeps recent chat in chronological order and expires old messages', async () => {
+    let time = Date.now();
+    const f = await fixture(':memory:', () => time),
+      a = await f.register();
+    await f.request('/api/save', a.token, { revision: 0, state: initialState(time) }, 'PUT');
+    for (let i = 1; i <= 105; i++) {
+      time += 3000;
+      expect(
+        (await f.request('/api/chat', a.token, { body: `Tin ${i}`, world: 'all' })).status,
+      ).toBe(201);
+    }
+    const feed = (await f.request('/api/chat')).data;
+    expect(feed.messages).toHaveLength(100);
+    expect(feed.messages[0].body).toBe('Tin 6');
+    expect(feed.messages.at(-1).body).toBe('Tin 105');
+    time += 3 * 86400000 + 1;
+    expect((await f.request('/api/chat')).data.messages).toHaveLength(0);
+  });
+  it('preserves chat messages and rate limits after restarting the server', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'van-tien-chat-restart-'));
+    cleanups.unshift(async () => rmSync(dir, { recursive: true, force: true }));
+    const path = join(dir, 'chat.sqlite'),
+      time = Date.now();
+    const f = await fixture(path, () => time),
+      a = await f.register();
+    await f.request('/api/save', a.token, { revision: 0, state: initialState(time) }, 'PUT');
+    await f.request('/api/chat', a.token, { body: 'Truyền âm còn lưu', world: 'all' });
+    await f.close();
+    const restored = await fixture(path, () => time);
+    expect((await restored.request('/api/chat', a.token)).data.messages[0].body).toBe(
+      'Truyền âm còn lưu',
+    );
+    expect(
+      (await restored.request('/api/chat', a.token, { body: 'spam', world: 'all' })).status,
+    ).toBe(429);
+  });
   it('ranks actual saved characters and expires online presence without exposing credentials', async () => {
     let time = Date.UTC(2026, 9, 7, 8);
     const f = await fixture(':memory:', () => time),
@@ -70,12 +159,16 @@ describe('shared web and Android accounts', () => {
     const high = initialState(time);
     high.name = 'Tinh Hà';
     high.stage = 27;
+    high.titles.owned = ['realm-immortal'];
+    high.titles.equipped = 'realm-immortal';
     await f.request('/api/save', a.token, { revision: 0, state: low }, 'PUT');
     await f.request('/api/save', b.token, { revision: 0, state: high }, 'PUT');
     let board = (await f.request('/api/community', a.token)).data;
     expect(board.ranking.map((p: any) => p.name)).toEqual(['Tinh Hà', 'Thanh Trúc']);
     expect(board.onlineCount).toBe(2);
     expect(board.topOnline[0].name).toBe('Tinh Hà');
+    expect(board.topOnline[0].titleId).toBe('realm-immortal');
+    expect(board.ranking[0].titleId).toBe('realm-immortal');
     expect(JSON.stringify(board)).not.toMatch(/password_hash|token_hash|high_player|low_player/);
     time += 121000;
     board = (await f.request('/api/community', a.token)).data;

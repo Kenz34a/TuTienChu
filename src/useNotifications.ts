@@ -4,6 +4,7 @@ import { qiCost, canPayBreakthroughTier } from './game/expansion';
 import { dayKey } from './game/engine';
 import type { GameState } from './game/types';
 import type { CommunityData } from './cloud/useCommunity';
+import { TITLES } from './game/titles';
 
 export interface GameNotification {
   id: string;
@@ -11,7 +12,7 @@ export interface GameNotification {
   text: string;
   time: number;
   read: boolean;
-  kind: 'boss' | 'online' | 'quest' | 'realm';
+  kind: 'boss' | 'online' | 'quest' | 'realm' | 'title';
 }
 function read(key: string): GameNotification[] {
   try {
@@ -26,7 +27,7 @@ function read(key: string): GameNotification[] {
               typeof n.text === 'string' &&
               Number.isFinite(n.time) &&
               typeof n.read === 'boolean' &&
-              ['boss', 'online', 'quest', 'realm'].includes(n.kind),
+              ['boss', 'online', 'quest', 'realm', 'title'].includes(n.kind),
           )
           .slice(0, 50)
       : [];
@@ -67,6 +68,14 @@ export function useNotifications(
   }, [notifications, key, scope]);
   useEffect(() => {
     if (scope !== key) return;
+    for (const title of TITLES)
+      if (state.titles.owned.includes(title.id))
+        push({
+          id: `title-${title.id}`,
+          kind: 'title',
+          title: 'Phong hào thức tỉnh',
+          text: `Đã mở danh hiệu “${title.name}”. Vào Danh hiệu để trang bị gia trì và hiệu ứng.`,
+        });
     if (
       state.stage < 59 &&
       state.xp >= xpNeeded(state.stage) &&
