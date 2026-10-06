@@ -11,6 +11,8 @@ Game tu tiên chữ tiếng Việt, có **web, app PC Windows và app Android (A
 
 Mã nguồn nằm trong kho Git; các tệp app nằm trong **Releases**, không nằm trong danh sách mã nguồn. Website chơi trực tuyến cần triển khai máy chủ riêng theo hướng dẫn bên dưới; trang GitHub này dùng để xem mã nguồn và tải app.
 
+Để dựng lại bản phát hành trên GitHub, mở **Actions → Build Windows and Android release → Run workflow**. Tag phải khớp phiên bản trong `package.json`. Workflow kiểm tra game/API, build web, máy chủ, Windows và APK, xác minh APK/checksum rồi đưa các gói vào Releases. APK CI dùng khóa phát triển của máy build; nếu thay thế APK thử nghiệm ký bằng khóa khác, xuất bản lưu trước khi gỡ bản cũ để cài lại.
+
 ## Chạy web và máy chủ đồng bộ
 
 Yêu cầu **Node.js 24** và npm. Cơ sở dữ liệu SQLite tích hợp trong Node, không cần dịch vụ cơ sở dữ liệu riêng.
