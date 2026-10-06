@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Vân Tiên Ký — Một niệm thành tiên",
+  "short_name": "Vân Tiên Ký",
+  "description": "Game tu tiên chữ tiếng Việt. Khám phá tam giới, tu luyện và viết nên đạo lộ của riêng bạn.",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f2",
+  "theme_color": "#213e35",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

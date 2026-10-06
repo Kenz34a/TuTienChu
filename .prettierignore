@@ -1,0 +1,11 @@
+node_modules
+dist
+package-lock.json
+test-results
+playwright-report
+public/*.png
+release
+server-build
+android
+var
+desktop/*.ico

@@ -1,0 +1,13 @@
+node_modules
+dist
+server-build
+.git
+var
+.env
+.env.*
+android
+playwright-report
+test-results
+release/van-tien-ky-web*.zip
+release/pc-build
+release/*.png

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vân Tiên Ký</string>
+    <string name="title_activity_main">Vân Tiên Ký</string>
+    <string name="package_name">vn.vantienky.game</string>
+    <string name="custom_url_scheme">vn.vantienky.game</string>
+</resources>

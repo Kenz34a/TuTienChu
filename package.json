@@ -1,0 +1,64 @@
+{
+  "name": "van-tien-ky",
+  "version": "1.2.0",
+  "description": "Game tu tiên chữ — PC, Android, web và đồng bộ tài khoản",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "format": "prettier --write .",
+    "build:server": "node scripts/build-server.mjs",
+    "build:all": "npm run build && npm run build:server",
+    "start": "node server-build/index.mjs",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:build": "node scripts/build-android.mjs",
+    "pc:build": "node --use-env-proxy scripts/build-pc.mjs",
+    "pc:build:linux": "node --use-env-proxy scripts/build-pc.mjs --linux",
+    "pc:dev": "npm run build && electron desktop/main.cjs",
+    "test:pc": "node scripts/pc-smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kenz34a/TuTienChu.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Kenz34a/TuTienChu/issues"
+  },
+  "homepage": "https://github.com/Kenz34a/TuTienChu#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/filesystem": "^8.1.4",
+    "@capacitor/share": "^8.0.3",
+    "express": "^5.2.1",
+    "lucide-react": "^1.52.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@electron/packager": "^20.3.0",
+    "@playwright/test": "^1.63.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.5.1",
+    "esbuild": "^0.28.2",
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

@@ -1,0 +1,224 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { createApp } from './app';
+import { initialState } from '../src/game/engine';
+import { DatabaseSync } from 'node:sqlite';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { Server } from 'node:http';
+
+const cleanups: (() => Promise<void>)[] = [];
+afterEach(async () => {
+  for (const close of cleanups.splice(0).reverse()) await close();
+});
+async function fixture(path = ':memory:', clock?: () => number, pcPath?: string) {
+  const service = createApp({ databasePath: path, now: clock, pcPath });
+  const server: Server = await new Promise((resolve) => {
+    const s = service.app.listen(0, '127.0.0.1', () => resolve(s));
+  });
+  const address = server.address();
+  if (!address || typeof address === 'string') throw Error('Server not listening');
+  const base = `http://127.0.0.1:${address.port}`;
+  let closed = false;
+  const close = async () => {
+    if (closed) return;
+    closed = true;
+    await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())));
+    service.close();
+  };
+  cleanups.push(close);
+  const request = async (
+    path: string,
+    token?: string,
+    body?: unknown,
+    method = body === undefined ? 'GET' : 'POST',
+    origin?: string,
+  ) => {
+    const response = await fetch(base + path, {
+      method,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(origin ? { Origin: origin } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return {
+      status: response.status,
+      data: response.status === 204 ? null : await response.json(),
+      headers: response.headers,
+    };
+  };
+  const register = async (name = 'test_player') => {
+    const r = await request('/api/auth/register', undefined, {
+      username: name,
+      password: 'test-password-123',
+    });
+    expect(r.status).toBe(201);
+    return r.data;
+  };
+  return { request, register, close, base };
+}
+describe('shared web and Android accounts', () => {
+  it('serves the configured PC package and returns 404 when it is unavailable', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'van-tien-download-'));
+    cleanups.unshift(async () => rmSync(dir, { recursive: true, force: true }));
+    const path = join(dir, 'pc.zip'),
+      bytes = Buffer.from('PK\u0003\u0004test-package');
+    writeFileSync(path, bytes);
+    const ready = await fixture(':memory:', undefined, path);
+    expect((await ready.request('/api/health')).data.pcAvailable).toBe(true);
+    const download = await fetch(ready.base + '/downloads/van-tien-ky-pc-windows.zip');
+    expect(download.status).toBe(200);
+    expect(download.headers.get('content-disposition')).toContain('van-tien-ky-pc-windows.zip');
+    expect(Buffer.from(await download.arrayBuffer())).toEqual(bytes);
+    const missing = await fixture();
+    expect((await missing.request('/api/health')).data.pcAvailable).toBe(false);
+    expect((await fetch(missing.base + '/downloads/van-tien-ky-pc-windows.zip')).status).toBe(404);
+  });
+  it('registers, logs in and loads a persistent character on another device', async () => {
+    const f = await fixture();
+    const a = await f.register();
+    const state = initialState();
+    state.metrics.meditations = 8;
+    state.name = 'Tiên nhân';
+    expect(
+      (await f.request('/api/save', a.token, { revision: 0, state }, 'PUT')).data.revision,
+    ).toBe(1);
+    const login = await f.request('/api/auth/login', undefined, {
+      username: 'TEST_PLAYER',
+      password: 'test-password-123',
+    });
+    expect(login.status).toBe(200);
+    expect(login.data.token).not.toBe(a.token);
+    expect((await f.request('/api/save', login.data.token)).data.state.name).toBe('Tiên nhân');
+    expect((await f.request('/api/auth/me', a.token)).data.user.username).toBe('test_player');
+  });
+  it('rejects stale writes and returns the newer save without overwriting it', async () => {
+    const f = await fixture(),
+      a = await f.register();
+    const state = initialState();
+    state.metrics.meditations = 2;
+    await f.request('/api/save', a.token, { revision: 0, state }, 'PUT');
+    state.metrics.meditations = 99;
+    const stale = await f.request('/api/save', a.token, { revision: 0, state }, 'PUT');
+    expect(stale.status).toBe(409);
+    expect(stale.data.cloud.state.metrics.meditations).toBe(2);
+    expect((await f.request('/api/save', a.token)).data.revision).toBe(1);
+  });
+  it('allows exactly one concurrent writer per revision', async () => {
+    const f = await fixture(),
+      a = await f.register();
+    const results = await Promise.all(
+      [1, 2, 3].map((n) =>
+        f.request(
+          '/api/save',
+          a.token,
+          { revision: 0, state: { ...initialState(), stones: n } },
+          'PUT',
+        ),
+      ),
+    );
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409, 409]);
+  });
+  it('isolates accounts and validates imported saves before storage', async () => {
+    const f = await fixture(),
+      a = await f.register('player_one'),
+      b = await f.register('player_two');
+    await f.request('/api/save', a.token, { revision: 0, state: initialState() }, 'PUT');
+    expect((await f.request('/api/save', b.token)).data.state).toBeNull();
+    for (const state of [{}, { ...initialState(), stage: 99 }, { ...initialState(), stones: -1 }])
+      expect((await f.request('/api/save', b.token, { revision: 0, state }, 'PUT')).status).toBe(
+        400,
+      );
+    expect((await f.request('/api/save', b.token)).data.revision).toBe(0);
+  });
+  it('rejects bad passwords, invalid usernames and duplicates', async () => {
+    const f = await fixture();
+    await f.register();
+    expect(
+      (
+        await f.request('/api/auth/register', undefined, {
+          username: 'test_player',
+          password: 'test-password-123',
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await f.request('/api/auth/login', undefined, {
+          username: 'test_player',
+          password: 'wrong-password-123',
+        })
+      ).status,
+    ).toBe(401);
+    expect(
+      (
+        await f.request('/api/auth/register', undefined, {
+          username: 'bad name',
+          password: 'test-password-123',
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await f.request('/api/auth/register', undefined, {
+          username: 'player_three',
+          password: 'short',
+        })
+      ).status,
+    ).toBe(400);
+  });
+  it('revokes only the signed-out device and expires sessions', async () => {
+    let now = Date.now();
+    const f = await fixture(':memory:', () => now),
+      a = await f.register();
+    const b = (
+      await f.request('/api/auth/login', undefined, {
+        username: 'test_player',
+        password: 'test-password-123',
+      })
+    ).data;
+    expect((await f.request('/api/logout', a.token, {})).status).toBe(200);
+    expect((await f.request('/api/save', a.token)).status).toBe(401);
+    expect((await f.request('/api/save', b.token)).status).toBe(200);
+    now += 31 * 86400000;
+    expect((await f.request('/api/save', b.token)).status).toBe(401);
+  });
+  it('permits Android and PC origins and forbids unconfigured origins', async () => {
+    const f = await fixture();
+    const android = await f.request(
+      '/api/save',
+      undefined,
+      undefined,
+      'OPTIONS',
+      'https://localhost',
+    );
+    const pc = await f.request('/api/save', undefined, undefined, 'OPTIONS', 'vantien://app');
+    expect(pc.status).toBe(204);
+    expect(pc.headers.get('access-control-allow-origin')).toBe('vantien://app');
+    expect(android.status).toBe(204);
+    expect(android.headers.get('access-control-allow-origin')).toBe('https://localhost');
+    expect(
+      (await f.request('/api/health', undefined, undefined, 'GET', 'https://evil.example')).status,
+    ).toBe(403);
+    expect((await f.request('/api/health')).headers.get('cache-control')).toBe('no-store');
+  });
+  it('survives restarts and stores neither passwords nor bearer tokens in plaintext', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'van-tien-sync-')),
+      path = join(dir, 'game.sqlite');
+    cleanups.unshift(async () => rmSync(dir, { recursive: true, force: true }));
+    const f = await fixture(path),
+      a = await f.register();
+    await f.request('/api/save', a.token, { revision: 0, state: initialState() }, 'PUT');
+    await f.close();
+    const db = new DatabaseSync(path);
+    const user = db.prepare('SELECT * FROM users').get()!,
+      session = db.prepare('SELECT * FROM sessions').get()!;
+    expect(user.password_hash).not.toBe('test-password-123');
+    expect(session.token_hash).not.toBe(a.token);
+    db.close();
+    const restarted = await fixture(path);
+    expect((await restarted.request('/api/save', a.token)).data.revision).toBe(1);
+  });
+});
