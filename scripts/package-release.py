@@ -65,9 +65,9 @@ SQLite trong DATA_DIR (mặc định var/). Phải giữ và sao lưu thư mục
 Khi hai bản khác nhau, chọn bản trên tài khoản hoặc trên thiết bị; xuất bản
 lưu dự phòng trước khi chọn nếu muốn giữ cả hai. Admin có thể đổi mật khẩu; chưa có khôi phục qua email.
 
-BẢN 1.6: Vạn Bảo Các mua bán giữa người chơi, 95 nội dung mới:
+BẢN 1.6: Vạn Bảo Các mua bán giữa người chơi, 100 nội dung mới:
 Động Thiên, linh thú, linh viên, phù lục, viễn chinh, 9 map, 12 NPC,
-12 nhiệm vụ, 8 bí kíp, 6 phó bản mới. Xem docs/release-1.6.0.md.
+12 nhiệm vụ, 8 bí kíp, 6 phó bản, 5 truyền thừa mới. Xem docs/release-1.6.1.md.
 Cập nhật mọi thiết bị lên 1.6 trước khi đồng bộ.
 
 BẢN 1.5: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,

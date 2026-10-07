@@ -1,4 +1,4 @@
-import { ADVENTURE_MANUALS, ADVENTURE_DUNGEONS } from './ascension';
+import { ADVENTURE_MANUALS, ADVENTURE_DUNGEONS, ADVENTURE_INHERITANCES } from './ascension';
 import { PHASE_COUNT, MAX_STAGE, IMMORTAL_STAGE, DIVINE_STAGE, stagePower } from './stages';
 import type { GameState, World } from './types';
 import type { MapData, Quest } from './data';
@@ -701,6 +701,8 @@ export interface Inheritance {
   lore: string;
   reveal: (s: GameState) => boolean;
   ready: (s: GameState) => boolean;
+  progress?: (s: GameState) => number;
+  target?: number;
 }
 export const INHERITANCES: Inheritance[] = [
   {
@@ -852,6 +854,8 @@ export const INHERITANCES: Inheritance[] = [
       !!s.spiritualRoot,
   },
 ];
+
+INHERITANCES.push(...ADVENTURE_INHERITANCES);
 
 export const EXTRA_QUESTS: Quest[] = [
   {

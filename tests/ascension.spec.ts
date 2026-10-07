@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { initialState } from '../src/game/engine';
 const KEY = 'van-tien-ky.save.v1';
 const state = (p: Page) => p.evaluate((key) => JSON.parse(localStorage.getItem(key)!), KEY);
 async function menu(p: Page, name: string) {
@@ -28,7 +29,7 @@ test('plays the pet, garden, expedition and talisman loop and keeps it after rel
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await page.getByRole('button', { name: 'Vào Động Thiên', exact: true }).click();
-  await expect(page.getByText('95+', { exact: true })).toBeVisible();
+  await expect(page.getByText('100+', { exact: true })).toBeVisible();
   const now = Date.now();
   await page.clock.install({ time: now });
   await page.clock.pauseAt(now + 1000);
@@ -152,4 +153,38 @@ test('trades between two actual accounts with escrow, private delivery and saved
   } finally {
     await context.close();
   }
+});
+
+test('discovers and claims a new permanent inheritance with visible progress and persisted rewards', async ({
+  page,
+}) => {
+  const fixture = initialState();
+  fixture.stage = 12;
+  fixture.lingqi = 140;
+  fixture.npcMet = ['dao-npc-lan'];
+  fixture.adventure.harvests = 10;
+  await page.addInitScript(
+    ({ key, fixture }) => {
+      if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(fixture));
+    },
+    { key: KEY, fixture },
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Vào Động Thiên', exact: true }).click();
+  await page.getByRole('button', { name: 'Khám phá 5 truyền thừa mới', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '14 truyền thừa trong tam giới' })).toBeVisible();
+  const legacy = page
+    .locator('.content-card')
+    .filter({ has: page.getByRole('heading', { name: 'Bách Thảo Linh Điển', exact: true }) });
+  await expect(
+    legacy.getByRole('progressbar', { name: 'Thử thách Bách Thảo Linh Điển' }),
+  ).toHaveAttribute('value', '10');
+  await legacy.getByRole('button', { name: 'Nhận truyền thừa', exact: true }).click();
+  await expect(legacy.getByRole('button', { name: 'Đạo thống đã tiếp nối' })).toBeDisabled();
+  const received = await state(page);
+  expect(received.inheritances).toContain('dao-legacy-garden');
+  expect(received.lingqi).toBe(0);
+  expect(received.manuals['dao-manual-sprout']).toBe(1);
+  await page.reload();
+  expect((await state(page)).inheritances).toContain('dao-legacy-garden');
 });

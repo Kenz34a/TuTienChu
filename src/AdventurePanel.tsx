@@ -31,10 +31,12 @@ export function AdventurePanel({
   state: s,
   act,
   onQuests,
+  onLineage,
 }: {
   state: GameState;
   act: (a: Action) => unknown;
   onQuests: () => void;
+  onLineage: () => void;
 }) {
   const [tab, setTab] = useState('pets'),
     [seed, setSeed] = useState('moonleaf');
@@ -59,6 +61,10 @@ export function AdventurePanel({
           <button className="button secondary" onClick={onQuests}>
             <BookOpen size={17} />
             Theo dõi cốt truyện mới
+          </button>
+          <button className="button secondary" onClick={onLineage}>
+            <Sparkles size={17} />
+            Khám phá 5 truyền thừa mới
           </button>
         </div>
         <div className="dao-emblem" aria-hidden="true">

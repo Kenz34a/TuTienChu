@@ -44,7 +44,7 @@ try {
   // Exercise the new lazily loaded screen on the bundled custom protocol.
   await page.getByRole('button', { name: 'Vào Động Thiên', exact: true }).click();
   await page.clock.runFor(1000);
-  await expect(page.getByText('95+', { exact: true })).toBeVisible();
+  await expect(page.getByText('100+', { exact: true })).toBeVisible();
   const fox = page
     .locator('.dao-card')
     .filter({ has: page.getByRole('heading', { name: 'Thanh Vĩ Hồ', exact: true }) });

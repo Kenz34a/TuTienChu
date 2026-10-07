@@ -1,5 +1,6 @@
 import type { GameState, World } from './types';
 import type { MapData, Quest } from './data';
+import type { Inheritance } from './expansion';
 
 export type DaoAttribute = 'attack' | 'defense' | 'health' | 'cultivation';
 export const DAO_LABELS: Record<DaoAttribute, string> = {
@@ -510,32 +511,129 @@ export const ADVENTURE_QUESTS: Quest[] = [
     item: 'key',
     reveal: (s) => s.claimed.includes('dao-firstseal'),
   },
-  ...regions
-    .slice(3)
-    .map(([key, name, _world, minStage], i): Quest => ({
-      id: `dao-story-${key}`,
-      name: [
-        'Mùa xuân trở lại',
-        'Khúc nhạc tìm nhà',
-        'Lời hứa trên trang băng',
-        'Cây cầu cho người ở lại',
-        'Một chuyến đò không quên',
-        'Bình minh của tam giới',
-      ][i],
-      description: `Gặp người giữ ${name} và khám phá vùng này ${i + 2} lần.`,
-      category: i === 5 ? 'hidden' : 'main',
-      minStage,
-      target: i + 2,
-      progress: (s) =>
-        s.npcMet.some((id) => ADVENTURE_NPCS.some((n) => n.id === id && n.mapId === key))
-          ? s.encounters.visits[key] || 0
-          : 0,
-      stones: 300 * (i + 1),
-      xp: 120 * (i + 1),
-      item: 'key',
-      reveal: (s) => (i === 5 ? s.adventure.reputation >= 20 : s.stage >= minStage),
-    })),
+  ...regions.slice(3).map(([key, name, _world, minStage], i): Quest => ({
+    id: `dao-story-${key}`,
+    name: [
+      'Mùa xuân trở lại',
+      'Khúc nhạc tìm nhà',
+      'Lời hứa trên trang băng',
+      'Cây cầu cho người ở lại',
+      'Một chuyến đò không quên',
+      'Bình minh của tam giới',
+    ][i],
+    description: `Gặp người giữ ${name} và khám phá vùng này ${i + 2} lần.`,
+    category: i === 5 ? 'hidden' : 'main',
+    minStage,
+    target: i + 2,
+    progress: (s) =>
+      s.npcMet.some((id) => ADVENTURE_NPCS.some((n) => n.id === id && n.mapId === key))
+        ? s.encounters.visits[key] || 0
+        : 0,
+    stones: 300 * (i + 1),
+    xp: 120 * (i + 1),
+    item: 'key',
+    reveal: (s) => (i === 5 ? s.adventure.reputation >= 20 : s.stage >= minStage),
+  })),
 ];
+const routeMastery = (s: GameState) =>
+  ['quay', 'memory', 'bells'].reduce(
+    (sum, id) => sum + Math.min(2, s.adventure.expeditions.completed[id] || 0),
+    0,
+  );
+export const ADVENTURE_INHERITANCES: Inheritance[] = [
+  {
+    id: 'dao-legacy-beast',
+    name: 'Khế Ước Ngự Thú',
+    world: 'earth',
+    minStage: 4,
+    symbol: '兽',
+    qi: 90,
+    attribute: 'health',
+    bonus: 0.04,
+    manual: 'dao-manual-beast',
+    hint: 'A Liên tại Ngọc Lan Thương Cảng biết lời thề giữa người và linh thú.',
+    requirement: 'Gặp A Liên · Nuôi một linh thú đạt cấp 3',
+    lore: 'Ngự thú sư để lại khế ước đồng sinh: người giữ lời chăm sóc sẽ được linh thú bảo hộ đạo thể.',
+    reveal: (s) => s.npcMet.includes('dao-npc-petkeeper'),
+    ready: (s) => Object.values(s.adventure.pets).some((p) => p.level >= 3),
+    progress: (s) => Math.max(0, ...Object.values(s.adventure.pets).map((p) => p.level)),
+    target: 3,
+  },
+  {
+    id: 'dao-legacy-garden',
+    name: 'Bách Thảo Linh Điển',
+    world: 'earth',
+    minStage: 12,
+    symbol: '药',
+    qi: 140,
+    attribute: 'cultivation',
+    bonus: 0.04,
+    manual: 'dao-manual-sprout',
+    hint: 'Lan Nhược giữ hạt giống cuối cùng của một linh viên đã mất.',
+    requirement: 'Gặp Lan Nhược · Thu hoạch linh dược 10 lần',
+    lore: 'Mười mùa gieo trồng đánh thức đạo điển của linh nông cổ đại. Hơi thở hòa cùng nhịp sinh trưởng của vạn vật.',
+    reveal: (s) => s.npcMet.includes('dao-npc-lan'),
+    ready: (s) => s.adventure.harvests >= 10,
+    progress: (s) => s.adventure.harvests,
+    target: 10,
+  },
+  {
+    id: 'dao-legacy-seal',
+    name: 'Thiên Phù Cổ Triện',
+    world: 'earth',
+    minStage: 24,
+    symbol: '篆',
+    qi: 220,
+    attribute: 'defense',
+    bonus: 0.05,
+    manual: 'dao-manual-seal',
+    hint: 'Tô Mặc ở Ly Hỏa Cổ Thành đang tìm người khắc lại cổ triện.',
+    requirement: 'Gặp Tô Mặc · Luyện phù thành công 6 lần',
+    lore: 'Sáu nét mực nối thành thiên triện, khắc lớp hộ đạo vĩnh viễn trong thần hồn thay cho một lá phù chóng tàn.',
+    reveal: (s) => s.npcMet.includes('dao-npc-sealkeeper'),
+    ready: (s) => s.adventure.sealsCrafted >= 6,
+    progress: (s) => s.adventure.sealsCrafted,
+    target: 6,
+  },
+  {
+    id: 'dao-legacy-route',
+    name: 'Tinh Hà Hành Đồ',
+    world: 'immortal',
+    minStage: 44,
+    symbol: '途',
+    qi: 500,
+    attribute: 'attack',
+    bonus: 0.05,
+    manual: 'dao-manual-song',
+    hint: 'Ôn Hành tại thương cảng giữ bản đồ chỉ hiện đường cho người từng trở về.',
+    requirement:
+      'Gặp Ôn Hành · Hoàn thành mỗi tuyến Hộ tống, Tìm trang đạo thư và Lặn cổ chung 2 lần',
+    lore: 'Ba cổ lộ hợp thành hành đồ. Kiếm ý học cách xuyên qua khoảng cách giữa những vì sao.',
+    reveal: (s) => s.npcMet.includes('dao-npc-cartographer'),
+    ready: (s) => routeMastery(s) >= 6,
+    progress: routeMastery,
+    target: 6,
+  },
+  {
+    id: 'dao-legacy-market',
+    name: 'Vạn Bảo Kim Sách',
+    world: 'divine',
+    minStage: 64,
+    symbol: '宝',
+    qi: 1200,
+    attribute: 'defense',
+    bonus: 0.06,
+    manual: 'dao-manual-bridge',
+    hint: 'Thương hội của Lan Nhược ghi lại những giao ước đã được giữ trọn.',
+    requirement: 'Gặp Lan Nhược · Hoàn tất 5 giao dịch mua hoặc bán với đạo hữu',
+    lore: 'Kim sách ghi lời hứa đã thành hiện thực. Đạo hữu giữ chữ tín được thương hội trao ấn hộ thân truyền đời.',
+    reveal: (s) => s.npcMet.includes('dao-npc-lan'),
+    ready: (s) => s.adventure.marketTrades >= 5,
+    progress: (s) => s.adventure.marketTrades,
+    target: 5,
+  },
+];
+
 export const ADVENTURE_CONTENT_COUNT =
   ADVENTURE_MAPS.length +
   ADVENTURE_NPCS.length +
@@ -546,7 +644,8 @@ export const ADVENTURE_CONTENT_COUNT =
   TALISMANS.length +
   ADVENTURE_MANUALS.length +
   ADVENTURE_DUNGEONS.length +
-  ADVENTURE_QUESTS.length;
+  ADVENTURE_QUESTS.length +
+  ADVENTURE_INHERITANCES.length;
 export const adventureDefaults = () => ({
   pets: {} as Record<string, { level: number; bond: number }>,
   activePet: null as string | null,

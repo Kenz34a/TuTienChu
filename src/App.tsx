@@ -2103,7 +2103,12 @@ export default function App() {
           )}
           {view === 'adventure' && (
             <Suspense fallback={<p role="status">Đang mở Động Thiên…</p>}>
-              <AdventurePanel state={s} act={act} onQuests={() => moveTo('quests')} />
+              <AdventurePanel
+                state={s}
+                act={act}
+                onQuests={() => moveTo('quests')}
+                onLineage={() => moveTo('lineage')}
+              />
             </Suspense>
           )}
           {view === 'market' && (

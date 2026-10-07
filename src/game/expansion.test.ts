@@ -29,7 +29,7 @@ describe('extended cultivation, content and backward compatibility', () => {
     expect(s.lingqi).toBe(0);
     expect(stats(s).cultivation).toBeGreaterThan(old);
     expect(SPIRITUAL_ROOTS).toHaveLength(10);
-    expect(INHERITANCES).toHaveLength(9);
+    expect(INHERITANCES).toHaveLength(14);
   });
   it('requires discovery, training and mastery to receive a one-time inheritance', () => {
     let s = initialState(now);

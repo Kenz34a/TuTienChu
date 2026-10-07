@@ -1,6 +1,6 @@
 {
   "name": "van-tien-ky",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Game tu tiên chữ — PC, Android, iOS, web và đồng bộ tài khoản",
   "scripts": {
     "dev": "vite",

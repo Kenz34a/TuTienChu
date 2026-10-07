@@ -85,7 +85,7 @@ export function LineagePanel({ state: s, act }: Props) {
         <BookOpen size={26} />
         <div>
           <span className="eyebrow">ĐẠO THỐNG CỔ NHÂN</span>
-          <h2>Chín truyền thừa trong tam giới</h2>
+          <h2>{INHERITANCES.length} truyền thừa trong tam giới</h2>
           <p>
             Tìm dấu tích qua NPC và bí cảnh, hoàn thành thử thách rồi dùng linh khí tiếp nhận. Gia
             trì vĩnh viễn cộng dồn; chiến lợi phẩm mỗi truyền thừa chỉ nhận một lần.
@@ -121,6 +121,16 @@ export function LineagePanel({ state: s, act }: Props) {
                 <h3>{found ? i.name : 'Đạo thống thất lạc'}</h3>
                 <p>{found ? i.lore : i.hint}</p>
                 <small>{found ? i.requirement : i.hint}</small>
+                {i.progress && i.target && (
+                  <label className="legacy-progress">
+                    Thử thách {Math.min(i.target, i.progress(s))}/{i.target}
+                    <progress
+                      aria-label={`Thử thách ${i.name}`}
+                      value={Math.min(i.target, i.progress(s))}
+                      max={i.target}
+                    />
+                  </label>
+                )}
                 <strong className="bonus-line">
                   +{Math.round(i.bonus * 100)}% {MANUAL_LABELS[i.attribute]} vĩnh viễn
                 </strong>
