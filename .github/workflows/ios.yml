@@ -65,16 +65,31 @@ jobs:
           from pathlib import Path
           import plistlib
           import subprocess
+          import zipfile
           simulator=Path('ios/DerivedData/Build/Products/Debug-iphonesimulator/App.app')
           device=Path('release/VanTienKy-ios-unsigned.xcarchive/Products/Applications/App.app')
           for app in [simulator,device]:
               info=plistlib.loads((app/'Info.plist').read_bytes())
               assert info['CFBundleIdentifier']=='vn.vantienky.game'
               assert info['CFBundleShortVersionString']=='1.5.0'
+              assert info['MinimumOSVersion']=='17.2'
               assert (app/'PrivacyInfo.xcprivacy').is_file()
               for asset in Path('dist').rglob('*'):
                   if asset.is_file():
                       assert (app/'public'/asset.relative_to('dist')).read_bytes()==asset.read_bytes(), str(asset)
+          assert plistlib.loads((device/'Info.plist').read_bytes())['DTPlatformName']=='iphoneos'
+          assert 'arm64' in subprocess.check_output(['lipo','-archs',str(device/'App')],text=True)
+          with zipfile.ZipFile('release/van-tien-ky-ios-unsigned.ipa') as ipa:
+              prefix='Payload/App.app/'
+              assert plistlib.loads(ipa.read(prefix+'Info.plist'))==plistlib.loads((device/'Info.plist').read_bytes())
+              assert ipa.read(prefix+'App')==(device/'App').read_bytes()
+              assert (ipa.getinfo(prefix+'App').external_attr >> 16) & 0o111
+              assert prefix+'PrivacyInfo.xcprivacy' in ipa.namelist()
+              assert prefix+'embedded.mobileprovision' not in ipa.namelist()
+              for asset in Path('dist').rglob('*'):
+                  if asset.is_file():
+                      assert ipa.read(prefix+'public/'+str(asset.relative_to('dist')))==asset.read_bytes(), str(asset)
+          subprocess.run(['shasum','-a','256','-c','ios-SHA256SUMS.txt'],cwd='release',check=True)
           subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent',str(simulator),'release/van-tien-ky-ios-simulator.zip'],check=True)
           subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent','release/VanTienKy-ios-unsigned.xcarchive','release/van-tien-ky-ios-unsigned-archive.zip'],check=True)
           PY
@@ -84,6 +99,8 @@ jobs:
           path: |
             release/van-tien-ky-ios-simulator.zip
             release/van-tien-ky-ios-unsigned-archive.zip
+            release/van-tien-ky-ios-unsigned.ipa
+            release/ios-SHA256SUMS.txt
             release/ios-simulator.png
           if-no-files-found: error
           retention-days: 14

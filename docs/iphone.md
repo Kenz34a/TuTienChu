@@ -2,6 +2,22 @@
 
 Game có dự án **app iOS riêng** tại `ios/`, hỗ trợ **iOS/iPadOS 17.2 trở lên**, đóng gói sẵn game để chơi ngoại tuyến. Đăng nhập cùng tài khoản và địa chỉ máy chủ để đồng bộ với web, Windows và Android. Xuất bản lưu mở bảng chia sẻ của iOS; chọn **Lưu vào Tệp** để giữ JSON.
 
+## Cài app iPhone riêng từ laptop Windows
+
+[**Tải app iPhone (.ipa chưa ký)**](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/van-tien-ky-ios-unsigned.ipa) · [SHA-256](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/ios-SHA256SUMS.txt)
+
+Đây là app iOS đóng gói sẵn game, không cần mở Safari. Tệp `.ipa` **chưa được ký bằng tài khoản Apple**, nên không thể cài bằng cách bấm vào tệp trên iPhone. Bạn có thể dùng **Sideloadly trên Windows** để ký và cài bằng Apple Account của mình; không cần Mac cho cách này.
+
+1. Tải `.ipa` ở trên về laptop. Tải **Sideloadly** từ [trang chính thức](https://sideloadly.io/). Làm theo hướng dẫn Windows trên trang đó để cài bản iTunes/iCloud tương thích; trang hiện yêu cầu bản tải từ Apple thay vì Microsoft Store.
+2. Cắm iPhone/iPad iOS 17.2+ bằng cáp, mở khóa và chọn **Tin cậy máy tính này**. Mở Sideloadly và chọn thiết bị của bạn.
+3. Kéo `van-tien-ky-ios-unsigned.ipa` vào Sideloadly, chọn chế độ ký bằng **Apple ID**, nhập tài khoản của bạn trực tiếp trên máy của bạn và bấm **Start**. Xác nhận đăng nhập/2FA nếu được yêu cầu. Sideloadly là công cụ bên thứ ba; xem thông tin của họ trước khi sử dụng. Không gửi mật khẩu hay mã xác thực trong chat hoặc lên GitHub.
+4. Trên iPhone vào **Cài đặt → Quyền riêng tư & bảo mật → Chế độ nhà phát triển (Developer Mode)** và bật nếu được yêu cầu. Trong **Cài đặt → Cài đặt chung → VPN & Quản lý thiết bị**, tin cậy tài khoản phát triển của bạn nếu iOS yêu cầu.
+5. Mở **Vân Tiên Ký**. Để đồng bộ, vào **Tài khoản & đồng bộ**, nhập URL HTTPS Render của game và đăng nhập cùng tài khoản trên web/Windows/Android. Chơi cục bộ không cần nhập máy chủ.
+
+Với tài khoản Apple miễn phí, app thường hết hạn sau **7 ngày**; ký/cài lại bằng cùng tài khoản và bundle ID. Sideloadly có tùy chọn tự làm mới khi máy tính kết nối được với điện thoại. Đồng bộ hoặc xuất bản lưu trước khi gỡ app; giữ nguyên bundle ID khi cập nhật. Xem [FAQ chính thức](https://sideloadly.io/faq) về giới hạn tài khoản và lỗi cài đặt.
+
+Bản IPA được đóng gói từ archive thiết bị **arm64** đã build trên Mac của GitHub, có kiểm tra checksum, executable và tài nguyên game. Chưa thử ký/cài bằng Sideloadly trên iPhone thật; kết quả cài phụ thuộc tài khoản, thiết bị và công cụ ký. Chưa có bản TestFlight/App Store.
+
 ## Dùng miễn phí khi chỉ có laptop Windows
 
 Dùng Safari trên iOS/iPadOS **17.2 trở lên** để các API lưu và đồng bộ hoạt động đầy đủ.
@@ -47,9 +63,13 @@ Trong mục **Artifacts** của lần chạy thành công:
 
 - `van-tien-ky-ios-simulator.zip`: app dành cho iPhone Simulator trên Mac.
 - `van-tien-ky-ios-unsigned-archive.zip`: archive **chưa ký**, dành cho người phát triển ký bằng team Apple phù hợp.
+- `van-tien-ky-ios-unsigned.ipa`: app thiết bị trong cấu trúc `Payload/App.app`, **chưa ký**; cần ký bằng tài khoản Apple trước khi cài.
+- `ios-SHA256SUMS.txt`: checksum SHA-256 của IPA.
 - `ios-simulator.png`: ảnh kiểm tra ứng dụng trong Simulator.
 
-Hai gói này **không phải tệp IPA đã ký để bấm cài trên iPhone**. Trên Mac có thể dùng `npm run ios:build -- simulator` hoặc `npm run ios:build -- device`; lệnh thứ hai tạo archive chưa ký. Bản cài trên thiết bị cần chữ ký/provisioning phù hợp. Các kiểm tra trình duyệt WebKit mô phỏng Safari bổ sung cho kiểm tra build, chưa thay thế thử trên iPhone thật.
+Các gói này **chưa có chữ ký để bấm cài trên iPhone**. Trên Mac có thể dùng `npm run ios:build -- simulator` hoặc `npm run ios:build -- device`; lệnh thứ hai tạo archive và IPA chưa ký. Bản cài trên thiết bị cần chữ ký/provisioning phù hợp. Các kiểm tra trình duyệt WebKit mô phỏng Safari bổ sung cho kiểm tra build, chưa thay thế thử trên iPhone thật.
+
+Người quản lý repo có thể chạy workflow **Publish unsigned iPhone IPA**, nhập ID của lần Build iOS thành công ở đúng commit hiện tại. Workflow kiểm tra nguồn build/checksum rồi thêm IPA vào release game cùng phiên bản; không thay đổi các tệp Windows/Android đã phát hành.
 
 ## Phát hành cho nhiều người
 

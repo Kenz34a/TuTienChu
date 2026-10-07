@@ -1,0 +1,48 @@
+name: Publish unsigned iPhone IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: Successful Build iOS run ID at this exact commit
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-ios-ipa
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BUILD_RUN: ${{ inputs.build_run }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify native build provenance
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN" > /tmp/ios-run.json
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          run=json.loads(Path('/tmp/ios-run.json').read_text())
+          assert run['path']=='.github/workflows/ios.yml'
+          assert run['head_sha']==os.environ['GITHUB_SHA']
+          assert run['status']=='completed' and run['conclusion']=='success'
+          PY
+      - name: Download verified IPA and check checksum
+        run: |
+          gh run download "$BUILD_RUN" --name ios-builds-require-signing-for-iphone --dir release
+          cd release
+          sha256sum -c ios-SHA256SUMS.txt
+      - name: Attach unsigned iPhone app to existing game release
+        run: |
+          RELEASE_TAG=$(node --input-type=module -e 'import {readFileSync} from "node:fs"; console.log(`v${JSON.parse(readFileSync("package.json","utf8")).version}`)')
+          gh release view "$RELEASE_TAG"
+          gh release upload "$RELEASE_TAG" release/van-tien-ky-ios-unsigned.ipa release/ios-SHA256SUMS.txt
