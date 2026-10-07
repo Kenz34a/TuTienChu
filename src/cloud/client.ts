@@ -74,11 +74,14 @@ export function migrateBaseline(mark: string | null): string | null {
   if (!mark) return mark;
   try {
     const v = JSON.parse(mark);
-    if (v.version !== 1) return mark;
+    if (v.version !== 1 && (v.version !== 2 || v.adventure)) return mark;
     const defaults = initialState();
     const state = {
-      ...defaults,
+      ...(v.version === 1 ? defaults : {}),
       ...v,
+      hp: defaults.hp,
+      stamina: defaults.stamina,
+      lastTick: defaults.lastTick,
       training: {
         ...defaults.training,
         ...v.training,

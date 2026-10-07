@@ -4,7 +4,7 @@ Game có dự án **app iOS riêng** tại `ios/`, hỗ trợ **iOS/iPadOS 17.2 
 
 ## Cài app iPhone riêng từ laptop Windows
 
-[**Tải app iPhone (.ipa chưa ký)**](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/van-tien-ky-ios-unsigned.ipa) · [SHA-256](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/ios-SHA256SUMS.txt)
+[**Tải app iPhone (.ipa chưa ký)**](https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/van-tien-ky-ios-unsigned.ipa) · [SHA-256](https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/ios-SHA256SUMS.txt)
 
 Đây là app iOS đóng gói sẵn game, không cần mở Safari. Tệp `.ipa` **chưa được ký bằng tài khoản Apple**, nên không thể cài bằng cách bấm vào tệp trên iPhone. Bạn có thể dùng **Sideloadly trên Windows** để ký và cài bằng Apple Account của mình; không cần Mac cho cách này.
 

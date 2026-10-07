@@ -96,14 +96,14 @@ describe('extended cultivation, content and backward compatibility', () => {
       expect(() => decodeSave(JSON.stringify(result.state))).not.toThrow();
     }
   });
-  it('has nine distinct maps per world, fifteen manuals, nine sects, twenty NPCs and new quests', () => {
+  it('has twelve distinct maps per world, twenty-three manuals, nine sects, thirty-two NPCs and new quests', () => {
     for (const world of ['earth', 'immortal', 'divine'])
-      expect(MAPS.filter((m) => m.world === world)).toHaveLength(9);
+      expect(MAPS.filter((m) => m.world === world)).toHaveLength(12);
     for (const content of [MAPS, MANUALS, SECTS, NPCS, QUESTS, DUNGEONS])
       expect(new Set(content.map((c) => c.id)).size).toBe(content.length);
-    expect(MANUALS).toHaveLength(15);
+    expect(MANUALS).toHaveLength(23);
     expect(SECTS).toHaveLength(9);
-    expect(NPCS).toHaveLength(20);
+    expect(NPCS).toHaveLength(32);
     expect(QUESTS.length).toBeGreaterThan(60);
   });
   it('preserves minute fractions across reload/stop, and rapid start/stop never creates XP or quest credits', () => {

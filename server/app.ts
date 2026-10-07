@@ -1,3 +1,4 @@
+import { attachMarket } from './market';
 import express from 'express';
 import { openDatabase, databaseRequests } from './database.mjs';
 import { bootstrapAdmin } from './bootstrap';
@@ -266,6 +267,7 @@ export async function createApp(options: {
       });
       const community = await attachCommunity(app, db, now, authenticate, presence);
       await attachChat(app, db, now, authenticate);
+      await attachMarket(app, db, now, authenticate, community.updateProfile);
       await attachAdmin(
         app,
         db,

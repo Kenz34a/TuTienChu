@@ -11,7 +11,7 @@ import { openDatabase } from './database.mjs';
 import { initialState } from '../src/game/engine';
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)('SQLite to PostgreSQL import', () => {
-  it('imports accounts, hashes, roles, saves, chat, gifts and boss ledgers atomically, resets sequences and refuses overwrites', async () => {
+  it('imports accounts, hashes, roles, saves, chat, gifts, marketplace escrow and boss ledgers atomically, resets sequences and refuses overwrites', async () => {
     const url = process.env.TEST_DATABASE_URL!,
       schema = 'test_' + randomUUID().replaceAll('-', '');
     const root = await openDatabase({ databaseURL: url });
@@ -119,6 +119,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('SQLite to PostgreSQL import', (
           )
         ).status,
       ).toBe(200);
+      const market = await request('/market/list', owner.token, {
+        requestId: randomUUID(),
+        kind: 'item',
+        asset: 'herb',
+        quantity: 1,
+        price: 50,
+        currency: 'spirit',
+        revision: (await request('/save', owner.token)).data.revision,
+      });
+      expect(market.status).toBe(200);
       const before = (await request('/save', owner.token)).data;
       await stop();
       const source = new DatabaseSync(path);
@@ -155,6 +165,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('SQLite to PostgreSQL import', (
       expect(login.status).toBe(200);
       expect(login.data.user.admin).toBe(true);
       expect((await request('/save', owner.token)).data).toEqual(before);
+      expect((await request('/market?tab=mine', owner.token)).data.listings[0]).toMatchObject({
+        id: market.data.listing.id,
+        quantity: 1,
+        status: 'open',
+        price: 50,
+      });
       expect((await request('/chat?world=all')).data.messages[0].body).toBe(
         'Truyền thừa từ SQLite',
       );

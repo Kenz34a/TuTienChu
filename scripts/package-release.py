@@ -28,7 +28,7 @@ for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-buil
 for name in ['package.json', 'package-lock.json', 'README.md', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'capacitor.config.ts', 'Dockerfile', '.dockerignore', '.gitignore', '.env.example', '.nvmrc', '.prettierrc.json', '.prettierignore', 'render.yaml']:
     files.add(Path(name))
 files.add(apk.relative_to(root))
-guide = '''VÂN TIÊN KÝ 1.5 — WEB + APP PC/ANDROID/iOS + MÁY CHỦ ĐỒNG BỘ
+guide = '''VÂN TIÊN KÝ 1.6 — WEB + APP PC/ANDROID/iOS + MÁY CHỦ ĐỒNG BỘ
 
 PC WINDOWS: tải gói riêng van-tien-ky-pc-windows.zip. Giải nén toàn bộ,
 mở VanTienKy-win32-x64/VanTienKy.exe. Dành cho Windows 10/11 64-bit.
@@ -55,7 +55,8 @@ Cài Node.js 24, giải nén, mở terminal tại thư mục chứa package.json
   npm start
 Bản web và máy chủ đã build sẵn trong dist/ và server-build/.
 Máy chủ dùng cổng 3000 mặc định. Để mở trên Internet/điện thoại, triển khai
-lên hosting Node/Docker, gắn ổ đĩa bền vững DATA_DIR và cấu hình HTTPS.
+lên hosting Node/Docker, dùng Neon/PostgreSQL qua DATABASE_URL và cấu hình HTTPS khi chạy Render Free.
+SQLite chỉ dùng tại máy riêng hoặc hosting có ổ đĩa bền vững DATA_DIR.
 Có Dockerfile; đọc README.md để build hoặc triển khai đầy đủ.
 Gói này chưa tự tạo hosting hay tên miền công khai.
 
@@ -63,6 +64,11 @@ DỮ LIỆU: tự lưu trên thiết bị. Đăng nhập để đồng bộ tài
 SQLite trong DATA_DIR (mặc định var/). Phải giữ và sao lưu thư mục này.
 Khi hai bản khác nhau, chọn bản trên tài khoản hoặc trên thiết bị; xuất bản
 lưu dự phòng trước khi chọn nếu muốn giữ cả hai. Admin có thể đổi mật khẩu; chưa có khôi phục qua email.
+
+BẢN 1.6: Vạn Bảo Các mua bán giữa người chơi, 95 nội dung mới:
+Động Thiên, linh thú, linh viên, phù lục, viễn chinh, 9 map, 12 NPC,
+12 nhiệm vụ, 8 bí kíp, 6 phó bản mới. Xem docs/release-1.6.0.md.
+Cập nhật mọi thiết bị lên 1.6 trước khi đồng bộ.
 
 BẢN 1.5: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,
 ba loại thạch, tự lập tông môn, phó bản, sáng/tối, thông báo và thiên bảng.

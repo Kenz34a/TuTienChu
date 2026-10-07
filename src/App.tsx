@@ -1,6 +1,13 @@
+import './adventure.css';
+const AdventurePanel = lazy(() =>
+  import('./AdventurePanel').then((m) => ({ default: m.AdventurePanel })),
+);
+const MarketPanel = lazy(() => import('./MarketPanel').then((m) => ({ default: m.MarketPanel })));
+import { ADVENTURE_CONTENT_COUNT } from './game/ascension';
 import { PHASE_COUNT, MAX_STAGE, stagePower } from './game/stages';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
+  Store,
   ArrowDownToLine,
   ArrowUpRight,
   Backpack,
@@ -121,7 +128,9 @@ type View =
   | 'titles'
   | 'chat'
   | 'cultivation'
-  | 'gifts';
+  | 'gifts'
+  | 'adventure'
+  | 'market';
 type Dialog =
   | 'settings'
   | 'help'
@@ -152,6 +161,18 @@ const navigation = [
     subtitle: 'Mỗi cơ duyên, một câu chuyện',
   },
   { id: 'sect' as View, label: 'Tông môn', icon: Castle, subtitle: 'Đồng môn cùng chung đạo tâm' },
+  {
+    id: 'market' as View,
+    label: 'Vạn Bảo Các',
+    icon: Store,
+    subtitle: 'Giao dịch với người chơi',
+  },
+  {
+    id: 'adventure' as View,
+    label: 'Động Thiên',
+    icon: Bird,
+    subtitle: 'Ngự thú · linh viên · phù lục',
+  },
   {
     id: 'craft' as View,
     label: 'Luyện chế',
@@ -887,6 +908,28 @@ export default function App() {
                   {serverStatus.message ||
                     'Tiến trình cục bộ vẫn được giữ. Các chức năng máy chủ tạm ngừng.'}
                 </p>
+              </div>
+            </section>
+          )}
+          {view === 'dashboard' && (
+            <section className="dao-launch">
+              <div>
+                <span className="eyebrow">ĐẠI CẬP NHẬT 1.6 · VẠN BẢO KHAI HỘI</span>
+                <h3>Động thiên rộng mở, đạo hữu tương phùng.</h3>
+                <p>
+                  {ADVENTURE_CONTENT_COUNT} nội dung mới · linh thú · trồng linh dược · luyện phù ·
+                  giao dịch người chơi.
+                </p>
+              </div>
+              <div className="dao-launch-actions">
+                <button className="button secondary" onClick={() => moveTo('adventure')}>
+                  <Bird size={18} />
+                  Vào Động Thiên
+                </button>
+                <button className="button primary" onClick={() => moveTo('market')}>
+                  <Store size={18} />
+                  Mở Vạn Bảo Các
+                </button>
               </div>
             </section>
           )}
@@ -1656,7 +1699,8 @@ export default function App() {
                   <Eye size={24} />
                   <span>
                     <strong>
-                      {QUESTS.filter((q) => q.category === 'hidden' && q.reveal?.(s)).length} / 4
+                      {QUESTS.filter((q) => q.category === 'hidden' && q.reveal?.(s)).length} /{' '}
+                      {QUESTS.filter((q) => q.category === 'hidden').length}
                     </strong>
                     <small>Cơ duyên ẩn đã tìm thấy</small>
                   </span>
@@ -2057,6 +2101,16 @@ export default function App() {
               </section>
             </>
           )}
+          {view === 'adventure' && (
+            <Suspense fallback={<p role="status">Đang mở Động Thiên…</p>}>
+              <AdventurePanel state={s} act={act} onQuests={() => moveTo('quests')} />
+            </Suspense>
+          )}
+          {view === 'market' && (
+            <Suspense fallback={<p role="status">Đang mở Vạn Bảo Các…</p>}>
+              <MarketPanel state={s} cloud={cloud} onLogin={() => setDialog('account')} />
+            </Suspense>
+          )}
           {view === 'manuals' && <ManualsPanel state={s} act={act} />}
           {view === 'lineage' && <LineagePanel state={s} act={act} />}
           {view === 'gifts' && <GiftPanel cloud={cloud} onLogin={() => setDialog('account')} />}
@@ -2119,7 +2173,7 @@ export default function App() {
             </span>
             <p>Mỗi người một đạo lộ. Mỗi niệm một thế giới.</p>
             <button onClick={() => setDialog(cloud.account ? 'account' : 'settings')}>
-              {cloud.account ? `Bản 1.5 · ${cloud.label}` : 'Bản 1.5 · Lưu cục bộ'}
+              {cloud.account ? `Bản 1.6 · ${cloud.label}` : 'Bản 1.6 · Lưu cục bộ'}
             </button>
           </footer>
         </main>

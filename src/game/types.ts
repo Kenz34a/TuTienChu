@@ -36,6 +36,7 @@ export interface Battle {
   skillCooldown: number;
 }
 export interface GameState {
+  adventure: ReturnType<typeof import('./ascension').adventureDefaults>;
   version: 2;
   name: string;
   race: RaceId;
@@ -105,6 +106,19 @@ export interface Stats {
   crit: number;
 }
 export type Action =
+  | {
+      type:
+        | 'adopt-pet'
+        | 'feed-pet'
+        | 'activate-pet'
+        | 'craft-talisman'
+        | 'use-talisman'
+        | 'start-expedition';
+      id: string;
+    }
+  | { type: 'plant'; id: string; plot: number }
+  | { type: 'harvest'; plot: number }
+  | { type: 'expand-garden' | 'collect-expedition' }
   | { type: 'equip-title'; id: string | null }
   | { type: 'title-effects'; enabled: boolean }
   | { type: 'meditate' }

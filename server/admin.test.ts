@@ -88,6 +88,7 @@ async function fixture() {
     create,
     cli,
     restart,
+    now: () => time,
     advance: (ms: number) => {
       time += ms;
     },
@@ -268,7 +269,7 @@ describe('server administration and account giftcodes', () => {
           })
         ).status,
       ).toBe(400);
-    await f.create('LATE', { startsAt: Date.now() + 60000 });
+    await f.create('LATE', { startsAt: f.now() + 60000 });
     expect(
       (await f.request('/api/giftcodes/redeem', f.player.token, { code: 'LATE', revision: 1 }))
         .status,
@@ -282,7 +283,7 @@ describe('server administration and account giftcodes', () => {
         })
       ).status,
     ).toBe(403);
-    const g = await f.create('EXPIRES', { expiresAt: Date.now() + 1000 });
+    const g = await f.create('EXPIRES', { expiresAt: f.now() + 1000 });
     f.advance(2000);
     expect(
       (await f.request('/api/giftcodes/redeem', f.player.token, { code: 'EXPIRES', revision: 1 }))

@@ -12,7 +12,7 @@ test('iPhone Safari offers home-screen installation and preserves offline cultiv
       'content',
       'yes',
     );
-    await page.getByRole('button', { name: 'Bản 1.5 · Lưu cục bộ', exact: true }).click();
+    await page.getByRole('button', { name: 'Bản 1.6 · Lưu cục bộ', exact: true }).click();
     await page.getByRole('button', { name: /Cài ứng dụng/ }).click();
     await expect(
       page.getByRole('heading', { name: 'Chơi miễn phí trên iPhone & iPad' }),
@@ -49,7 +49,7 @@ test('iPhone Safari can export and re-import its character through a real file',
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Bản 1.5 · Lưu cục bộ', exact: true }).click();
+  await page.getByRole('button', { name: 'Bản 1.6 · Lưu cục bộ', exact: true }).click();
   const downloaded = page.waitForEvent('download');
   await page.getByRole('button', { name: /Xuất bản lưu/ }).click();
   const download = await downloaded,

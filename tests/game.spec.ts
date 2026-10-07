@@ -216,7 +216,7 @@ test('responsive layout, navigation, and destructive action confirmation', async
 test('export, invalid import protection, and valid import work on the device', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
-  await page.getByRole('button', { name: 'Bản 1.5 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.6 · Lưu cục bộ' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Xuất bản lưu/ }).click();
   const download = await downloadPromise;

@@ -1,3 +1,4 @@
+import { PETS, MATERIALS, SEEDS, TALISMANS, EXPEDITIONS } from './ascension';
 import { ITEMS, MAPS, NPCS, QUESTS, RACES, SECTS, SLOTS } from './data';
 import { initialState, stats } from './engine';
 import type { GameState, Gear } from './types';
@@ -104,6 +105,7 @@ export function decodeSave(input: string): GameState {
     return invalid();
   const defaults = initialState();
   for (const key of [
+    'adventure',
     'lingqi',
     'training',
     'manuals',
@@ -117,6 +119,65 @@ export function decodeSave(input: string): GameState {
     'titles',
   ] as const)
     if (v[key] === undefined) v[key] = defaults[key];
+  const a = v.adventure;
+  const counts = (value: unknown, ids: string[]) =>
+    record(value) && Object.entries(value).every(([id, n]) => ids.includes(id) && integer(n, 1e8));
+  if (
+    !record(a) ||
+    !record(a.pets) ||
+    Object.entries(a.pets).some(
+      ([id, p]) =>
+        !PETS.some((x) => x.id === id) ||
+        !record(p) ||
+        !integer(p.level, 10) ||
+        (p.level as number) < 1 ||
+        !integer(p.bond, 99),
+    ) ||
+    (a.activePet !== null &&
+      (typeof a.activePet !== 'string' || !Object.hasOwn(a.pets, a.activePet))) ||
+    !counts(
+      a.materials,
+      MATERIALS.map((m) => m.id),
+    ) ||
+    !counts(
+      a.talismans,
+      TALISMANS.map((t) => t.id),
+    ) ||
+    !integer(a.plots, 6) ||
+    (a.plots as number) < 3 ||
+    !integer(a.harvests) ||
+    !integer(a.sealsCrafted) ||
+    !integer(a.reputation) ||
+    !integer(a.marketTrades) ||
+    !Array.isArray(a.garden) ||
+    a.garden.length > (a.plots as number) ||
+    new Set(a.garden.map((p) => (record(p) ? p.plot : null))).size !== a.garden.length ||
+    a.garden.some(
+      (p) =>
+        !record(p) ||
+        !integer(p.plot, (a.plots as number) - 1) ||
+        !SEEDS.some((x) => x.id === p.seed) ||
+        !number(p.plantedAt, 1e15) ||
+        !number(p.readyAt, 1e15) ||
+        (p.readyAt as number) < (p.plantedAt as number),
+    ) ||
+    (a.activeTalisman !== null &&
+      (!record(a.activeTalisman) ||
+        !TALISMANS.some((x) => x.id === (a.activeTalisman as Record<string, unknown>).id) ||
+        !number(a.activeTalisman.until, 1e15))) ||
+    !record(a.expeditions) ||
+    !counts(
+      a.expeditions.completed,
+      EXPEDITIONS.map((x) => x.id),
+    ) ||
+    (a.expeditions.active !== null &&
+      (!record(a.expeditions.active) ||
+        !EXPEDITIONS.some(
+          (x) => x.id === (a.expeditions as { active: Record<string, unknown> }).active.id,
+        ) ||
+        !number(a.expeditions.active.readyAt, 1e15)))
+  )
+    return invalid();
   if (
     !record(v.titles) ||
     !list(

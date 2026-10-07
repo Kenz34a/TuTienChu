@@ -16,6 +16,13 @@ describe('cloud save metadata', () => {
     expect(migrateBaseline(null)).toBeNull();
     expect(migrateBaseline('broken baseline')).toBe('broken baseline');
   });
+  it('adds the new adventure baseline to a version-two account without creating a false conflict', () => {
+    const old: any = initialState();
+    delete old.adventure;
+    old.training.totalSeconds = 600;
+    old.metrics.meditations = 10;
+    expect(migrateBaseline(fingerprint(old))).toBe(fingerprint(decodeSave(JSON.stringify(old))));
+  });
   it('keeps offline writes on the device without attempting a network request', async () => {
     vi.stubGlobal('navigator', { onLine: false });
     const network = vi.spyOn(globalThis, 'fetch');

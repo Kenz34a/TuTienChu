@@ -23,10 +23,30 @@ async function state(page: Page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem('van-tien-ky.save.v1') || '{}'));
 }
 async function meditation(page: Page) {
+  const connected = await page.evaluate(
+    () => navigator.onLine && !!localStorage.getItem('van-tien-ky.account.v1'),
+  );
+  const flushed = async () => {
+    const ready = await page.evaluate(() => {
+      const account = JSON.parse(localStorage.getItem('van-tien-ky.account.v1') || 'null');
+      const saved = JSON.parse(localStorage.getItem('van-tien-ky.save.v1') || 'null');
+      const baseline = account?.baseline ? JSON.parse(account.baseline) : null;
+      return (
+        !!baseline &&
+        baseline.training.active === saved.training.active &&
+        baseline.metrics.meditations === saved.metrics.meditations
+      );
+    });
+    return ready;
+  };
   const start = page.getByRole('button', { name: /Tĩnh tâm tu luyện/ });
   if (await start.isVisible()) await start.click();
+  // Finish actual HTTP writes before jumping the page clock: otherwise the jump
+  // can abort a committed request's timeout and intentionally create a conflict.
+  if (connected) await expect.poll(flushed, { timeout: 15000 }).toBe(true);
   await page.clock.fastForward(60000);
   await page.getByRole('button', { name: /Xuất định/ }).click();
+  if (connected) await expect.poll(flushed, { timeout: 15000 }).toBe(true);
 }
 
 test('shares a character across devices and safely resolves offline changes', async ({

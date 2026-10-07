@@ -25,7 +25,7 @@ try {
     ...(platform === 'win32'
       ? {
           icon: resolve('desktop/icon.ico'),
-          appVersion: '1.5.0',
+          appVersion: JSON.parse(await readFile('package.json', 'utf8')).version,
           win32metadata: {
             ProductName: 'Vân Tiên Ký',
             FileDescription: 'Game tu tiên chữ',

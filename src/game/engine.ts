@@ -1,5 +1,13 @@
 import { PHASE_COUNT, MAX_STAGE, stagePower } from './stages';
 import {
+  adventureDefaults,
+  adventureBonuses,
+  PETS,
+  SEEDS,
+  EXPEDITIONS,
+  TALISMANS,
+} from './ascension';
+import {
   ITEMS,
   MAPS,
   NPCS,
@@ -46,6 +54,7 @@ export const dayKey = (now = Date.now()) =>
 export function initialState(now = Date.now()): GameState {
   return {
     version: 2,
+    adventure: adventureDefaults(),
     name: 'Vô Danh',
     race: 'human',
     raceChosen: false,
@@ -149,6 +158,7 @@ export function stats(s: GameState): Stats {
   }
   const root = SPIRITUAL_ROOTS.find((r) => r.id === s.spiritualRoot?.id);
   const bonuses = [
+    ...adventureBonuses(s),
     ...(root && s.spiritualRoot
       ? [{ attribute: root.attribute, bonus: root.bonus * s.spiritualRoot.level }]
       : []),
@@ -253,6 +263,139 @@ export function perform(
   if (s.battle && !['tick', 'fight'].includes(action.type))
     return fail('Hãy kết thúc trận chiến trước khi thực hiện hành động này.');
   switch (action.type) {
+    case 'adopt-pet': {
+      const pet = PETS.find((p) => p.id === action.id);
+      if (!pet || s.stage < pet.minStage || s.metrics.kills < pet.kills)
+        return fail('Linh thú chưa chấp nhận khế ước: hãy tăng tu vi và trừ yêu.');
+      if (s.adventure.pets[pet.id]) return fail('Bạn đã kết khế ước với linh thú này.');
+      if (s.stones < pet.price) return fail(`Cần ${pet.price} linh thạch để lập khế ước.`);
+      s.stones -= pet.price;
+      s.adventure.pets[pet.id] = { level: 1, bond: 0 };
+      s.adventure.activePet ??= pet.id;
+      s.adventure.reputation += 2;
+      return done(`${pet.name} đã chọn đồng hành cùng bạn.`, 'story');
+    }
+    case 'activate-pet': {
+      if (!Object.hasOwn(s.adventure.pets, action.id)) return fail('Hãy kết khế ước trước.');
+      s.adventure.activePet = action.id;
+      return done('Linh thú đã xuất chiến, gia trì được áp dụng.');
+    }
+    case 'feed-pet': {
+      const pet = Object.hasOwn(s.adventure.pets, action.id)
+        ? s.adventure.pets[action.id]
+        : undefined;
+      if (!pet || pet.level >= 10) return fail('Linh thú chưa có khế ước hoặc đã đạt cấp 10.');
+      const cost = 20 * pet.level;
+      if ((s.inventory.herb || 0) < 3 || (s.inventory.pill || 0) < 1 || s.stones < cost)
+        return fail(`Cần 3 linh thảo, 1 Hồi Xuân Đan và ${cost} linh thạch.`);
+      takeItem(s, 'herb', 3);
+      takeItem(s, 'pill');
+      s.stones -= cost;
+      pet.bond += 20;
+      if (pet.bond >= 100) {
+        pet.bond = 0;
+        pet.level++;
+        s.adventure.reputation++;
+      }
+      return done(`Linh thú thân mật +20 · Cấp ${pet.level} · ${pet.bond}/100.`);
+    }
+    case 'plant': {
+      const seed = SEEDS.find((x) => x.id === action.id);
+      if (
+        !seed ||
+        s.stage < seed.minStage ||
+        !Number.isInteger(action.plot) ||
+        action.plot < 0 ||
+        action.plot >= s.adventure.plots
+      )
+        return fail('Luống hoặc giống linh dược chưa mở khóa.');
+      if (s.adventure.garden.some((p) => p.plot === action.plot))
+        return fail('Luống đang có linh dược, hãy thu hoạch trước.');
+      if (s.stones < seed.price) return fail(`Hạt giống cần ${seed.price} linh thạch.`);
+      s.stones -= seed.price;
+      s.adventure.garden.push({
+        plot: action.plot,
+        seed: seed.id,
+        plantedAt: now,
+        readyAt: now + seed.seconds * 1000,
+      });
+      return done(`Đã gieo ${seed.name}. Linh dược trưởng thành sau ${seed.seconds / 60} phút.`);
+    }
+    case 'harvest': {
+      const crop = s.adventure.garden.find((p) => p.plot === action.plot);
+      if (!crop || now < crop.readyAt) return fail('Linh dược chưa trưởng thành.');
+      const seed = SEEDS.find((x) => x.id === crop.seed)!;
+      if ((s.adventure.materials[seed.material] || 0) > 1e8 - 3)
+        return fail('Kho nguyên liệu đã đầy.');
+      s.adventure.materials[seed.material] = (s.adventure.materials[seed.material] || 0) + 3;
+      s.adventure.garden = s.adventure.garden.filter((p) => p.plot !== action.plot);
+      s.adventure.harvests++;
+      s.adventure.reputation++;
+      return done(`Thu hoạch 3 ${seed.name}, uy tín Động Thiên +1.`);
+    }
+    case 'expand-garden': {
+      if (s.adventure.plots >= 6) return fail('Linh viên đã có tối đa 6 luống.');
+      const cost = s.adventure.plots * 120;
+      if (s.stones < cost || (s.inventory.ore || 0) < 4)
+        return fail(`Mở luống cần ${cost} linh thạch và 4 huyền thiết.`);
+      s.stones -= cost;
+      takeItem(s, 'ore', 4);
+      s.adventure.plots++;
+      return done('Đã mở thêm một luống linh dược.');
+    }
+    case 'start-expedition': {
+      const route = EXPEDITIONS.find((x) => x.id === action.id);
+      if (!route || s.stage < route.minStage) return fail('Chưa đủ tu vi cho cổ lộ này.');
+      if (s.adventure.expeditions.active) return fail('Đoàn viễn chinh chưa trở về.');
+      if (s.battle || s.stamina < 15 || s.stones < 20)
+        return fail('Cần thoát chiến đấu, 15 thể lực và 20 linh thạch.');
+      s.stamina -= 15;
+      s.stones -= 20;
+      s.adventure.expeditions.active = { id: route.id, readyAt: now + route.seconds * 1000 };
+      return done(`Đoàn viễn chinh lên đường: ${route.name}.`, 'story');
+    }
+    case 'collect-expedition': {
+      const active = s.adventure.expeditions.active;
+      if (!active || now < active.readyAt) return fail('Đoàn viễn chinh chưa trở về.');
+      const route = EXPEDITIONS.find((x) => x.id === active.id)!;
+      if ((s.adventure.materials[route.material] || 0) > 1e8 - 3)
+        return fail('Kho nguyên liệu đã đầy.');
+      s.adventure.materials[route.material] = (s.adventure.materials[route.material] || 0) + 3;
+      s.adventure.expeditions.completed[route.id] =
+        (s.adventure.expeditions.completed[route.id] || 0) + 1;
+      s.adventure.expeditions.active = null;
+      s.adventure.reputation += 2;
+      return done(`Viễn chinh trở về: +3 nguyên liệu, uy tín +2.`);
+    }
+    case 'craft-talisman': {
+      const recipe = TALISMANS.find((x) => x.id === action.id);
+      if (!recipe || s.stage < recipe.minStage) return fail('Chưa đủ tu vi lĩnh ngộ phù phương.');
+      if (
+        (s.adventure.materials[recipe.plant] || 0) < 2 ||
+        (s.adventure.materials[recipe.dust] || 0) < 1 ||
+        (s.inventory.essence || 0) < 1
+      )
+        return fail('Cần 2 linh dược, 1 nguyên liệu viễn chinh và 1 tinh hoa.');
+      if ((s.adventure.talismans[recipe.id] || 0) > 1e8 - 2) return fail('Kho phù lục đã đầy.');
+      s.adventure.materials[recipe.plant] -= 2;
+      s.adventure.materials[recipe.dust]--;
+      takeItem(s, 'essence');
+      s.adventure.talismans[recipe.id] = (s.adventure.talismans[recipe.id] || 0) + 2;
+      s.adventure.sealsCrafted++;
+      s.metrics.crafts++;
+      return done(`Luyện thành 2 ${recipe.name}.`);
+    }
+    case 'use-talisman': {
+      const recipe = TALISMANS.find((x) => x.id === action.id);
+      if (!recipe || !(s.adventure.talismans[recipe.id] || 0))
+        return fail('Bạn chưa có phù lục này.');
+      if (s.stage < recipe.minStage) return fail('Chưa đủ tu vi kích hoạt phù.');
+      if (s.adventure.activeTalisman && s.adventure.activeTalisman.until > now)
+        return fail('Phù đang gia trì. Đợi hết hiệu lực để dùng phù mới.');
+      s.adventure.talismans[recipe.id]--;
+      s.adventure.activeTalisman = { id: recipe.id, until: now + recipe.duration * 1000 };
+      return done(`${recipe.name} gia trì trong 10 phút.`);
+    }
     case 'equip-title': {
       const honor = TITLES.find((t) => t.id === action.id);
       if (action.id !== null && (!honor || !titleUnlocked(s, honor)))

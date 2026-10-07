@@ -1,0 +1,544 @@
+.dao-page {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.dao-hero {
+  padding: 38px;
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at right bottom, rgba(183, 154, 96, 0.16), transparent 60%),
+    var(--paper);
+}
+.dao-hero h2 {
+  font-family: var(--serif);
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.15;
+  margin: 14px 0;
+  color: var(--green);
+}
+.dao-hero p {
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 580px;
+  margin-bottom: 20px;
+}
+.dao-emblem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 220px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(183, 154, 96, 0.12), transparent 65%);
+  color: var(--gold);
+}
+.dao-emblem > span {
+  font-size: 82px;
+  filter: drop-shadow(0 12px 15px rgba(38, 75, 62, 0.15));
+}
+.dao-emblem i {
+  position: absolute;
+  font-family: var(--serif);
+  font-style: normal;
+  right: 10px;
+  top: 4px;
+  writing-mode: vertical-rl;
+  font-size: 35px;
+  color: var(--green);
+  opacity: 0.55;
+}
+.dao-emblem > svg:last-child {
+  position: absolute;
+  left: 0;
+  bottom: 8px;
+}
+.dao-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.dao-summary article {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 20px;
+}
+.dao-summary span {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 10px;
+}
+.dao-summary strong {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--green);
+  overflow-wrap: anywhere;
+}
+.dao-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+.dao-tabs button {
+  flex-shrink: 0;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 13px 17px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+.dao-tabs .active {
+  background: var(--green);
+  color: var(--paper);
+}
+.dao-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+.dao-section-heading h3 {
+  font-family: var(--serif);
+  font-size: 25px;
+  width: 100%;
+}
+.dao-section-heading p {
+  line-height: 1.7;
+  color: var(--muted);
+  width: 100%;
+}
+.dao-section-heading label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.dao-page select,
+.dao-page input {
+  font: inherit;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: inherit;
+  border-radius: 10px;
+  padding: 11px;
+  min-width: 0;
+  max-width: 100%;
+}
+.dao-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.dao-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.dao-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+.dao-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.dao-card h3 {
+  font-family: var(--serif);
+  font-size: 23px;
+  overflow-wrap: anywhere;
+}
+.dao-card p {
+  line-height: 1.7;
+  color: var(--muted);
+  font-size: 13px;
+}
+.dao-card small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.dao-card .button {
+  margin-top: auto;
+  justify-content: center;
+  min-height: 42px;
+}
+.dao-animal {
+  font-size: 49px;
+  display: block;
+  line-height: 1.3;
+}
+.dao-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 10px;
+}
+.dao-pill {
+  font-size: 10px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  color: var(--muted);
+  padding: 6px 10px;
+  width: fit-content;
+}
+.dao-bonus {
+  font-size: 13px;
+  color: var(--green);
+}
+.dao-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.dao-card-actions .button {
+  flex: 1;
+  white-space: normal;
+}
+.dao-card label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.dao-page progress {
+  width: 100%;
+  height: 7px;
+  accent-color: var(--green);
+  margin-top: 10px;
+}
+.dao-seal {
+  font-family: var(--serif);
+  font-size: 34px;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  width: 52px;
+  height: 61px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px 3px 8px 3px;
+  background: rgba(183, 154, 96, 0.06);
+}
+.dao-store {
+  padding: 24px;
+}
+.dao-store h3 {
+  font-family: var(--serif);
+  font-size: 23px;
+  margin-bottom: 18px;
+}
+.dao-store > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.dao-store span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding: 9px 0;
+  font-size: 12px;
+  min-width: 0;
+}
+.dao-store strong {
+  margin-left: auto;
+  color: var(--green);
+}
+.dao-return {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.dao-return > div {
+  flex: 1;
+}
+.dao-return p {
+  color: var(--muted);
+  margin-top: 8px;
+}
+.dao-empty {
+  padding: 45px 24px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.dao-empty h3 {
+  font-family: var(--serif);
+  font-size: 25px;
+}
+.dao-empty p {
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 550px;
+}
+.dao-warning,
+.dao-success,
+.dao-buff {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 10px;
+  padding: 16px 20px;
+  background: var(--paper);
+  font-size: 13px;
+  line-height: 1.8;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dao-success,
+.dao-buff {
+  border-left-color: var(--green);
+}
+.market-form {
+  padding: 30px;
+}
+.market-form h3 {
+  font-family: var(--serif);
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+.market-form > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+.market-form form {
+  display: grid;
+  gap: 20px;
+}
+.market-form label {
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+}
+.market-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.market-quote {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  border-block: 1px solid var(--line);
+  padding: 20px 0;
+}
+.market-quote span {
+  font-size: 12px;
+  color: var(--muted);
+  display: grid;
+  gap: 10px;
+}
+.market-quote strong {
+  color: var(--green);
+  font-size: 18px;
+}
+.market-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.market-toolbar label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 160px;
+}
+.market-toolbar input {
+  width: 100%;
+}
+.market-filter-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+.market-price {
+  font-family: var(--serif);
+  font-size: 25px;
+  color: var(--green);
+  overflow-wrap: anywhere;
+}
+.market-price small {
+  display: inline;
+  font-family: inherit;
+  color: var(--muted);
+  font-size: 14px;
+}
+.market-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.dao-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 29, 23, 0.65);
+  backdrop-filter: blur(6px);
+  padding: 20px;
+  overflow: auto;
+}
+.dao-confirm {
+  padding: 35px;
+  max-width: 510px;
+  width: 100%;
+  position: relative;
+  display: grid;
+  gap: 20px;
+}
+.dao-confirm h3 {
+  font-family: var(--serif);
+  font-size: 28px;
+}
+.dao-confirm p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.dao-close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+}
+.dao-launch {
+  margin: 0 0 25px;
+  padding: 23px 26px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(110deg, rgba(183, 154, 96, 0.12), transparent), var(--paper);
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.dao-launch > div:first-child {
+  flex: 1;
+  min-width: 200px;
+}
+.dao-launch h3 {
+  font-family: var(--serif);
+  font-size: 24px;
+  margin: 7px 0;
+}
+.dao-launch p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.dao-launch-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.dao-page button:focus-visible,
+.dao-page select:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  .dao-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dao-hero {
+    grid-template-columns: 1fr 140px;
+  }
+  .dao-emblem {
+    min-height: 160px;
+  }
+}
+@media (max-width: 650px) {
+  .dao-hero {
+    grid-template-columns: 1fr;
+    padding: 25px;
+  }
+  .dao-emblem {
+    display: none;
+  }
+  .dao-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dao-summary article {
+    padding: 15px;
+  }
+  .dao-summary strong {
+    font-size: 22px;
+  }
+  .dao-grid {
+    grid-template-columns: 1fr;
+  }
+  .dao-card {
+    padding: 22px;
+  }
+  .dao-store > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .market-fields {
+    grid-template-columns: 1fr;
+  }
+  .market-form {
+    padding: 22px;
+  }
+  .market-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+  .market-toolbar > label {
+    grid-column: 1 / -1;
+  }
+  .market-toolbar select {
+    width: 100%;
+    min-width: 0;
+  }
+  .dao-return {
+    flex-wrap: wrap;
+  }
+  .dao-return .button {
+    width: 100%;
+  }
+  .dao-launch {
+    padding: 20px;
+  }
+  .dao-launch-actions {
+    width: 100%;
+  }
+  .dao-launch-actions .button {
+    flex: 1;
+  }
+  .dao-confirm {
+    padding: 30px 22px;
+  }
+  .dao-tabs button {
+    padding: 12px;
+  }
+  .market-pagination .button {
+    padding: 10px;
+  }
+}

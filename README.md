@@ -2,11 +2,17 @@
 
 Game tu tiên chữ tiếng Việt, có **web, app PC Windows, app Android (APK) và dự án app iPhone/iPad riêng**. PC dùng Electron, Android/iOS dùng Capacitor; các app đóng gói giao diện và cơ chế game, chơi được ngoại tuyến ngay sau khi cài. Đăng nhập cùng tài khoản để đồng bộ nhân vật, trang bị, ba lô, nhiệm vụ và trận chiến giữa PC, Android, iPhone/iPad và web.
 
-## Tải bản 1.5.0
+## Đại cập nhật 1.6 — Vạn Bảo Khai Hội
 
-- [App Windows 10/11 64-bit](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/van-tien-ky-pc-windows.zip): giải nén toàn bộ rồi mở `VanTienKy-win32-x64/VanTienKy.exe`.
-- [APK Android 7.0 trở lên](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/van-tien-ky-android.apk).
-- [Gói web và máy chủ đã build](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/van-tien-ky-web-server.zip).
+**Vạn Bảo Các**: chợ người chơi thật, ký gửi trang bị/vật phẩm/nguyên liệu/phù lục, gửi đơn riêng, thu hồi và lịch sử giao dịch. **Động Thiên**: linh thú, linh viên, luyện phù và viễn chinh có thời gian chờ. Thêm **95 nội dung** gồm 9 map, 12 NPC, 12 linh thú, 12 nguyên liệu, 6 giống cây, 6 viễn chinh, 12 phù lục, 8 bí kíp, 6 phó bản và 12 nhiệm vụ. Map mới có thêm 72 quái thường/tinh anh.
+
+[Xem đầy đủ bản 1.6](docs/release-1.6.0.md) · [Hướng dẫn giao dịch](docs/market.md). Cập nhật web và mọi app lên 1.6; bản lưu cũ được giữ và thêm mặc định cho hệ thống mới.
+
+## Tải bản 1.6.0
+
+- [App Windows 10/11 64-bit](https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/van-tien-ky-pc-windows.zip): giải nén toàn bộ rồi mở `VanTienKy-win32-x64/VanTienKy.exe`.
+- [APK Android 7.0 trở lên](https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/van-tien-ky-android.apk).
+- [Gói web và máy chủ đã build](https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/van-tien-ky-web-server.zip).
 - [Tất cả bản phát hành và hướng dẫn](https://github.com/Kenz34a/TuTienChu/releases).
 
 Mã nguồn nằm trong kho Git; các tệp app nằm trong **Releases**, không nằm trong danh sách mã nguồn. Website chơi trực tuyến cần triển khai máy chủ riêng theo hướng dẫn bên dưới; trang GitHub này dùng để xem mã nguồn và tải app.
@@ -19,7 +25,7 @@ Mã nguồn nằm trong kho Git; các tệp app nằm trong **Releases**, không
 
 Tạo tài khoản **Neon Free**, lấy chuỗi kết nối PostgreSQL riêng, rồi tạo **Render Free** từ nhánh `main` bằng cấu hình `render.yaml`. Điền `DATABASE_URL`, `BOOTSTRAP_ADMIN_USERNAME` và `BOOTSTRAP_ADMIN_PASSWORD` trong Render; admin được tạo riêng trước khi website mở. Đăng nhập `/admin`, sau đó xóa cả hai biến bootstrap khỏi Render. Dữ liệu nằm ở Neon, giữ qua khởi động lại; thiếu `DATABASE_URL` thì cấu hình Render dừng thay vì dùng SQLite.
 
-Render Free ngủ sau 15 phút không truy cập, lần mở tiếp theo có thể chờ khoảng một phút. Trong app Windows/Android 1.5.0, nhập URL HTTPS Render trong **Tài khoản & đồng bộ**. Không dùng gói web-server ZIP 1.5.0 cũ cho Neon: triển khai mã hiện tại từ GitHub. Hướng dẫn có cách nhập dữ liệu SQLite cũ nếu cần giữ toàn bộ tài khoản.
+Render Free ngủ sau 15 phút không truy cập, lần mở tiếp theo có thể chờ khoảng một phút. Trong app Windows/Android 1.6.0, nhập URL HTTPS Render trong **Tài khoản & đồng bộ**. Khi triển khai Neon, dùng mã nguồn nhánh main hoặc gói web-server 1.6.0 mới; gói 1.5.0 cũ chưa có PostgreSQL. Hướng dẫn có cách nhập dữ liệu SQLite cũ nếu cần giữ toàn bộ tài khoản.
 
 ## Chơi trên iPhone/iPad
 
@@ -27,7 +33,7 @@ Render Free ngủ sau 15 phút không truy cập, lần mở tiếp theo có th�
 
 Miễn phí: mở website game HTTPS bằng **Safari → Chia sẻ → Thêm vào màn hình chính**. Mở icon Vân Tiên Ký và đăng nhập cùng tài khoản để đồng bộ Windows/Android/iOS/web. Lần đầu cần mạng để tải tài nguyên; sau đó có thể chơi ngoại tuyến.
 
-App iOS riêng nằm trong `ios/`, hỗ trợ **iOS/iPadOS 17.2+**, có game đóng gói sẵn và chia sẻ JSON vào Tệp. [**Tải app iPhone (.ipa chưa ký)**](https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/van-tien-ky-ios-unsigned.ipa). Trên Windows, có thể dùng Sideloadly để ký/cài bằng Apple Account của bạn theo [hướng dẫn iPhone](docs/iphone.md). Tài khoản Apple miễn phí thường cần ký lại sau 7 ngày; không thể bấm tệp IPA chưa ký để cài trực tiếp.
+App iOS riêng nằm trong `ios/`, hỗ trợ **iOS/iPadOS 17.2+**, có game đóng gói sẵn và chia sẻ JSON vào Tệp. [**Tải app iPhone (.ipa chưa ký)**](https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/van-tien-ky-ios-unsigned.ipa). Trên Windows, có thể dùng Sideloadly để ký/cài bằng Apple Account của bạn theo [hướng dẫn iPhone](docs/iphone.md). Tài khoản Apple miễn phí thường cần ký lại sau 7 ngày; không thể bấm tệp IPA chưa ký để cài trực tiếp.
 
 Trên **Mac với Xcode 26+**, chạy `npm ci`, `npm run ios:sync`, `npm run ios:open`, chọn team ký và Run lên iPhone. Phân phối TestFlight/App Store cần Apple Developer có phí; **chưa có IPA đã ký hay link TestFlight/App Store**. Workflow iOS tạo bản Simulator, archive thiết bị và IPA chưa ký, có checksum. Build/run Simulator đã được kiểm tra; chưa cài trên iPhone thật.
 
@@ -94,7 +100,7 @@ Nếu môi trường build dùng proxy có CA riêng, Dockerfile hỗ trợ truy
 
 Đặt reverse proxy có HTTPS trước cổng 3000 và trỏ tên miền về máy chủ. Kiểm tra `/api/health` trả JSON `service: van-tien-ky, ready: true`; truy cập gốc tên miền phải hiển thị game. Khi dùng reverse proxy nhiều tầng, điều chỉnh `trust proxy` theo cấu hình thực tế. Hosting Node thông thường: lệnh build `npm ci && npm run build:all`, lệnh start `npm start`, mount ổ đĩa bền vững tại đường dẫn `DATA_DIR`.
 
-Có thể đặt `APP_RELEASE_TAG=v1.5.0` để nút tải app chuyển tới GitHub Releases khi máy chủ không có tệp. Cấu hình Render đã bật lựa chọn này.
+Có thể đặt `APP_RELEASE_TAG=v1.6.0` để nút tải app chuyển tới GitHub Releases khi máy chủ không có tệp. Cấu hình Render đã bật lựa chọn này.
 
 Đặt `release/van-tien-ky-android.apk` và `release/van-tien-ky-pc-windows.zip` trên máy chủ để các nút tải app hoạt động. Gói web/server ZIP chứa APK và mã nguồn PC; gói Windows ZIP tải riêng, sao chép vào `release/` trước khi triển khai nếu muốn phục vụ tải PC. Docker tự chứa các bản tải nếu có trước khi build; không cần SDK Android trên máy chủ web. Nếu đưa web và API ra hai tên miền riêng, cần cấu hình bổ sung; mặc định là chung một tên miền.
 

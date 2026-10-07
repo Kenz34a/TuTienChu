@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag matching package.json (for example v1.5.0)
+        description: Release tag matching package.json (for example v1.6.0)
         required: true
-        default: v1.5.0
+        default: v1.6.0
         type: string
 
 permissions:
@@ -20,8 +20,23 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: game_test
+          POSTGRES_PASSWORD: local-ci-test-password
+          POSTGRES_DB: game_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U game_test -d game_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      TEST_DATABASE_URL: postgresql://game_test:local-ci-test-password@127.0.0.1:5432/game_test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -44,10 +59,10 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
       - name: Install dependencies
         run: npm ci
-      - name: Test game and accounts
-        run: npm test
       - name: Build web and server
         run: npm run build:all
+      - name: Test game and accounts on SQLite and PostgreSQL
+        run: npm test
       - name: Build Windows app
         run: npm run pc:build
       - name: Build and verify Android APK

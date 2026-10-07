@@ -47,7 +47,7 @@ jobs:
         run: |
           docker run --detach --name van-tien-docker-ci --network host \
             -e PORT=3189 -e DATABASE_URL="$TEST_DATABASE_URL" \
-            -e REQUIRE_POSTGRES=1 -e APP_RELEASE_TAG=v1.5.0 van-tien-ky:ci
+            -e REQUIRE_POSTGRES=1 -e APP_RELEASE_TAG=v1.6.0 van-tien-ky:ci
           trap 'docker logs van-tien-docker-ci; docker rm --force van-tien-docker-ci' EXIT
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
@@ -71,7 +71,7 @@ jobs:
           for(const file of ['van-tien-ky-android.apk','van-tien-ky-pc-windows.zip']) {
             const download=await fetch(base+'/downloads/'+file,{redirect:'manual'});
             assert.equal(download.status,302);
-            assert.equal(download.headers.get('location'),'https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/'+file);
+            assert.equal(download.headers.get('location'),'https://github.com/Kenz34a/TuTienChu/releases/download/v1.6.0/'+file);
           }
           console.log('Production Docker web, PostgreSQL and app download checks passed');
           JS

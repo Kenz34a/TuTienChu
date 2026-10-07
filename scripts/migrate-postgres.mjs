@@ -20,6 +20,7 @@ const tables = [
   'chat_messages',
   'chat_rate',
   'metadata',
+  'market_listings',
 ];
 const sourcePath = process.argv[2];
 if (!sourcePath || !existsSync(sourcePath) || !process.env.DATABASE_URL) {

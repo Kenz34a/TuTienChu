@@ -43,9 +43,9 @@ function winBoss(s: GameState, index = 0) {
 
 describe('Local monster populations', () => {
   it('has 5 normal and 3 elite species in every map across all 3 worlds', () => {
-    expect(ENEMIES).toHaveLength(216);
-    expect(ALL_ENEMIES).toHaveLength(246);
-    expect(new Set(ALL_ENEMIES.map((enemy) => enemy.id)).size).toBe(246);
+    expect(ENEMIES).toHaveLength(288);
+    expect(ALL_ENEMIES).toHaveLength(336);
+    expect(new Set(ALL_ENEMIES.map((enemy) => enemy.id)).size).toBe(336);
     for (const map of MAPS) {
       expect(
         ENEMIES.filter((enemy) => enemy.mapId === map.id && enemy.kind === 'normal'),

@@ -29,7 +29,7 @@ export default defineConfig({
     },
     {
       name: 'iphone',
-      testMatch: ['**/iphone.spec.ts', '**/cloud.spec.ts'],
+      testMatch: ['**/iphone.spec.ts', '**/cloud.spec.ts', '**/ascension.spec.ts'],
       use: { ...devices['iPhone 13'], browserName: 'webkit' },
     },
   ],

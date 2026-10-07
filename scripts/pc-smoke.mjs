@@ -41,11 +41,24 @@ try {
   expect((await load()).metrics.meditations).toBe(1);
   await page.reload();
   expect((await load()).metrics.meditations).toBe(1);
+  // Exercise the new lazily loaded screen on the bundled custom protocol.
+  await page.getByRole('button', { name: 'Vào Động Thiên', exact: true }).click();
+  await page.clock.runFor(1000);
+  await expect(page.getByText('95+', { exact: true })).toBeVisible();
+  const fox = page
+    .locator('.dao-card')
+    .filter({ has: page.getByRole('heading', { name: 'Thanh Vĩ Hồ', exact: true }) });
+  await fox.getByRole('button', { name: 'Kết khế ước', exact: true }).click();
+  expect((await load()).adventure.activePet).toBe('fox');
+  await page
+    .getByRole('navigation', { name: 'Điều hướng chính' })
+    .getByRole('button', { name: 'Đạo lộ', exact: true })
+    .click();
   const backup = join(temp, 'backup.json');
   await app.evaluate(({ dialog }, path) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
   }, backup);
-  await page.getByRole('button', { name: 'Bản 1.5 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.6 · Lưu cục bộ' }).click();
   await page
     .getByRole('dialog')
     .getByRole('button', { name: /Xuất bản lưu/ })
@@ -91,6 +104,14 @@ try {
     await web.getByRole('button', { name: 'Đóng', exact: true }).click();
     await web.clock.install({ time: await page.evaluate(() => Date.now()) });
     await web.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
+    await expect
+      .poll(() =>
+        web.evaluate(() => {
+          const a = JSON.parse(localStorage.getItem('van-tien-ky.account.v1'));
+          return JSON.parse(a.baseline).training.active;
+        }),
+      )
+      .toBe(true);
     await web.clock.fastForward(60000);
     await web.getByRole('button', { name: /Xuất định/ }).click();
     await web.getByRole('button', { name: 'Tài khoản & đồng bộ', exact: true }).click();

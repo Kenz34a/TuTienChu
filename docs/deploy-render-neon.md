@@ -25,15 +25,15 @@ Chuỗi này chứa mật khẩu cơ sở dữ liệu: chỉ dán vào biến m�
 
 5. Bấm **Deploy/Apply** rồi đợi build và trạng thái **Live**. Mở URL HTTPS Render cấp, dạng `https://ten-dich-vu.onrender.com`.
 
-Nếu tài khoản Render không cho tạo Blueprint Free, chọn **New → Web Service**, kết nối cùng repo/nhánh, runtime **Node**, region **Frankfurt**, instance **Free**, Build Command `npm ci --include=dev && npm run build:all`, Start Command `npm start`, Health Check Path `/api/health`. Trong Environment thêm ba biến riêng ở bảng trên và các biến cố định: `NODE_VERSION=24.19.0`, `NODE_ENV=production`, `ELECTRON_SKIP_BINARY_DOWNLOAD=1`, `REQUIRE_POSTGRES=1`, `APP_RELEASE_TAG=v1.5.0`. Kiểm tra chi phí $0 trước khi tạo.
+Nếu tài khoản Render không cho tạo Blueprint Free, chọn **New → Web Service**, kết nối cùng repo/nhánh, runtime **Node**, region **Frankfurt**, instance **Free**, Build Command `npm ci --include=dev && npm run build:all`, Start Command `npm start`, Health Check Path `/api/health`. Trong Environment thêm ba biến riêng ở bảng trên và các biến cố định: `NODE_VERSION=24.19.0`, `NODE_ENV=production`, `ELECTRON_SKIP_BINARY_DOWNLOAD=1`, `REQUIRE_POSTGRES=1`, `APP_RELEASE_TAG=v1.6.0`. Kiểm tra chi phí $0 trước khi tạo.
 
 Không cần tự đặt `PORT`; máy chủ đọc cổng Render cấp. Không cần `DATA_DIR` hay `CORS_ORIGINS` nếu phục vụ web và API cùng website. `REQUIRE_POSTGRES=1` giúp dừng deploy khi thiếu cấu hình Neon, tránh vô tình dùng SQLite dễ mất dữ liệu.
 
 ### Nếu đã tạo dịch vụ với runtime Docker
 
-Bạn có thể giữ dịch vụ Docker hiện tại, vẫn dùng gói **Free** và Neon. Dockerfile build web/API từ mã nguồn; không cần APK, app Windows hay thư mục `release/` có sẵn trong GitHub. Thư mục này được tạo khi build. Đặt `APP_RELEASE_TAG=v1.5.0` để các nút tải Android/Windows chuyển tới GitHub Releases.
+Bạn có thể giữ dịch vụ Docker hiện tại, vẫn dùng gói **Free** và Neon. Dockerfile build web/API từ mã nguồn; không cần APK, app Windows hay thư mục `release/` có sẵn trong GitHub. Thư mục này được tạo khi build. Đặt `APP_RELEASE_TAG=v1.6.0` để các nút tải Android/Windows chuyển tới GitHub Releases.
 
-Trong **Environment**, đặt `DATABASE_URL` của Neon, `REQUIRE_POSTGRES=1`, `APP_RELEASE_TAG=v1.5.0` và cặp `BOOTSTRAP_ADMIN_USERNAME`/`BOOTSTRAP_ADMIN_PASSWORD` cho lần khởi tạo đầu tiên như bảng trên. Không chọn ổ đĩa trả phí hay dùng SQLite trên Render Free. Đặt **Health Check Path** là `/api/health`. Node.js đã có trong image nên không cần Build/Start Command của runtime Node.
+Trong **Environment**, đặt `DATABASE_URL` của Neon, `REQUIRE_POSTGRES=1`, `APP_RELEASE_TAG=v1.6.0` và cặp `BOOTSTRAP_ADMIN_USERNAME`/`BOOTSTRAP_ADMIN_PASSWORD` cho lần khởi tạo đầu tiên như bảng trên. Không chọn ổ đĩa trả phí hay dùng SQLite trên Render Free. Đặt **Health Check Path** là `/api/health`. Node.js đã có trong image nên không cần Build/Start Command của runtime Node.
 
 Nếu log báo `COPY /app/release ... not found`, hãy chọn **Manual Deploy → Deploy latest commit** sau khi repo có bản sửa Dockerfile. Nếu lần triển khai tiếp theo lỗi ở kết nối cơ sở dữ liệu hoặc bootstrap, xem log mới và kiểm tra các biến tương ứng; lỗi thư mục `release/` xảy ra trước khi kết nối Neon.
 
@@ -47,7 +47,7 @@ Mở trang game, đăng nhập cùng tài khoản admin hoặc tạo tài khoả
 
 Bootstrap chỉ chạy một lần trên mỗi cơ sở dữ liệu. Đổi hai biến bootstrap không đổi mật khẩu đã lưu và không cấp lại quyền đã bị thu hồi. Khi cần đổi mật khẩu, dùng trang admin bằng một admin khác đang hoạt động, hoặc công cụ quản trị trên máy tin cậy. Không có mật khẩu mặc định hay nút công khai để tự nhận quyền admin.
 
-Trong app Windows/Android **1.5.0**, mở **Tài khoản & đồng bộ**, nhập URL HTTPS của website (không thêm `/api` hay `/admin`), đăng nhập cùng tài khoản và chọn nhân vật muốn dùng. Các nút tải app trên web chuyển tới GitHub Releases nếu máy chủ không có sẵn tệp app.
+Trong app Windows/Android **1.6.0**, mở **Tài khoản & đồng bộ**, nhập URL HTTPS của website (không thêm `/api` hay `/admin`), đăng nhập cùng tài khoản và chọn nhân vật muốn dùng. Các nút tải app trên web chuyển tới GitHub Releases nếu máy chủ không có sẵn tệp app.
 
 ## 4. Kiểm tra đã lưu dữ liệu
 

@@ -1,3 +1,4 @@
+import { ADVENTURE_MAPS, ADVENTURE_NPCS, ADVENTURE_QUESTS } from './ascension';
 import { PHASE_COUNT, MAX_STAGE, IMMORTAL_STAGE, DIVINE_STAGE, stagePower } from './stages';
 import type { GameState, ItemId, RaceId, Slot, World } from './types';
 import { EXTRA_MAPS, EXTRA_NPCS, EXTRA_QUESTS, EXTRA_SECTS } from './expansion';
@@ -315,7 +316,7 @@ export const MAPS: MapData[] = [
     lore: 'Không còn trời, không còn đất. Chỉ có một niệm, và mọi khả năng của vũ trụ.',
   },
 ];
-MAPS.push(...EXTRA_MAPS);
+MAPS.push(...EXTRA_MAPS, ...ADVENTURE_MAPS);
 export const SECTS = [
   {
     id: 'cloud',
@@ -407,7 +408,7 @@ export const NPCS = [
     reward: 'key' as ItemId,
   },
 ];
-NPCS.push(...EXTRA_NPCS);
+NPCS.push(...EXTRA_NPCS, ...ADVENTURE_NPCS);
 export interface Quest {
   id: string;
   name: string;
@@ -560,7 +561,7 @@ export const QUESTS: Quest[] = [
 ];
 export const questClaimed = (s: GameState, q: Quest) =>
   q.category === 'daily' ? s.daily.claimed.includes(q.id) : s.claimed.includes(q.id);
-QUESTS.push(...EXTRA_QUESTS);
+QUESTS.push(...EXTRA_QUESTS, ...ADVENTURE_QUESTS);
 export const sectInfo = (s: GameState) =>
   s.sect === 'custom' && s.customSect
     ? {

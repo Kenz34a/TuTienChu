@@ -1,3 +1,4 @@
+import { ADVENTURE_MANUALS, ADVENTURE_DUNGEONS } from './ascension';
 import { PHASE_COUNT, MAX_STAGE, IMMORTAL_STAGE, DIVINE_STAGE, stagePower } from './stages';
 import type { GameState, World } from './types';
 import type { MapData, Quest } from './data';
@@ -398,6 +399,7 @@ export const MANUALS: {
     description: 'Tham ngộ nguồn gốc vạn vật.',
   },
 ];
+MANUALS.push(...ADVENTURE_MANUALS);
 export const MANUAL_LABELS: Record<ManualAttribute, string> = {
   attack: 'công kích',
   defense: 'phòng thủ',
@@ -542,6 +544,7 @@ export const DUNGEONS: {
     lore: 'Thử thách cuối cùng trước nguồn gốc thiên đạo.',
   },
 ];
+DUNGEONS.push(...ADVENTURE_DUNGEONS);
 export const WORLD_BOSSES = [
   {
     id: 'world-earth',

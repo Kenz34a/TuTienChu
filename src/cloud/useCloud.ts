@@ -284,6 +284,9 @@ export function useCloud(
         throw new Error('Tài khoản đã thay đổi. Phần thưởng lưu trên tài khoản đã nhận.');
       receive(result.cloud, a.token);
       return result;
+    } catch (e) {
+      if (e instanceof ApiError && e.cloud && session.current?.token === a.token) hold(e.cloud);
+      throw e;
     } finally {
       busy.current = false;
       setWorking(false);
