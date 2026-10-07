@@ -1,6 +1,6 @@
 {
   "name": "van-tien-ky",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Game tu tiên chữ — PC, Android, web và đồng bộ tài khoản",
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,8 @@
     "pc:build": "node --use-env-proxy scripts/build-pc.mjs",
     "pc:build:linux": "node --use-env-proxy scripts/build-pc.mjs --linux",
     "pc:dev": "npm run build && electron desktop/main.cjs",
-    "test:pc": "node scripts/pc-smoke.mjs"
+    "test:pc": "node scripts/pc-smoke.mjs",
+    "admin": "node scripts/admin.mjs"
   },
   "repository": {
     "type": "git",

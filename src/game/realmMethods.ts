@@ -1,3 +1,4 @@
+import { PHASE_COUNT } from './stages';
 import { REALMS, STAGES } from './data';
 
 const methods = [
@@ -124,14 +125,19 @@ const methods = [
 ] as const;
 export const REALM_METHODS = methods.map(([name, lore, phases, ascent], i) => ({
   realm: REALMS[i],
-  minStage: i * 3,
+  minStage: i * PHASE_COUNT,
   name,
   lore,
-  phases,
+  phases: phases
+    .split(' → ')
+    .flatMap((part, i) =>
+      i === 2 ? ['Hậu kỳ: luyện hóa linh lực, củng cố đạo pháp', part] : [part],
+    )
+    .join(' → '),
   ascent,
 }));
 export const currentRealmMethod = (stage: number) => ({
-  ...REALM_METHODS[Math.floor(stage / 3)],
-  phase: STAGES[stage % 3],
-  ascending: stage % 3 === 2,
+  ...REALM_METHODS[Math.floor(stage / PHASE_COUNT)],
+  phase: STAGES[stage % PHASE_COUNT],
+  ascending: stage % PHASE_COUNT === PHASE_COUNT - 1,
 });

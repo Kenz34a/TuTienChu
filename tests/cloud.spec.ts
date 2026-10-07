@@ -24,17 +24,7 @@ async function state(page: Page) {
 async function meditation(page: Page) {
   const start = page.getByRole('button', { name: /Tĩnh tâm tu luyện/ });
   if (await start.isVisible()) await start.click();
-  const loaded = page.waitForNavigation({ waitUntil: 'load' });
-  await page.evaluate(() => {
-    const key = 'van-tien-ky.save.v1';
-    const s = JSON.parse(localStorage.getItem(key)!);
-    s.lastTick = Date.now() - 60000;
-    localStorage.setItem(key, JSON.stringify(s));
-    // Reload in the same browser task so the next interval cannot overwrite this
-    // simulated offline interval before the game restores it.
-    location.reload();
-  });
-  await loaded;
+  await page.clock.fastForward(60000);
   await page.getByRole('button', { name: /Xuất định/ }).click();
 }
 
@@ -45,6 +35,7 @@ test('shares a character across devices and safely resolves offline changes', as
   test.setTimeout(90000);
   const username = `cloud_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   await page.goto('/');
+  await page.clock.install();
   await meditation(page);
   await signin(page, username, true);
   await expect(page.getByRole('status').filter({ hasText: 'Đã đồng bộ' })).toBeVisible({
@@ -52,6 +43,15 @@ test('shares a character across devices and safely resolves offline changes', as
   });
   const saved = await state(page);
   const secondContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  // Keep the offline API guard through PWA reloads: a service-worker-controlled
+  // request can escape Playwright routing even when the page request is aborted.
+  await secondContext.addInitScript(() => {
+    const getOnline = Object.getOwnPropertyDescriptor(Navigator.prototype, 'onLine')!.get!;
+    Object.defineProperty(navigator, 'onLine', {
+      get: () =>
+        localStorage.getItem('test-api-offline') === 'true' ? false : getOnline.call(navigator),
+    });
+  });
   let apiOffline = false;
   await secondContext.route('**/api/**', (route) =>
     apiOffline ? route.abort('internetdisconnected') : route.continue(),
@@ -59,6 +59,7 @@ test('shares a character across devices and safely resolves offline changes', as
   const second = await secondContext.newPage();
   try {
     await second.goto('http://127.0.0.1:4173');
+    await second.clock.install();
     await signin(second, username);
     await expect(second.getByRole('heading', { name: 'Chọn đạo lộ muốn tiếp tục' })).toBeVisible();
     await second.getByRole('button', { name: /Dùng bản trên tài khoản/ }).click();
@@ -74,6 +75,7 @@ test('shares a character across devices and safely resolves offline changes', as
     await closeAccount(page);
     await closeAccount(second);
     apiOffline = true;
+    await second.evaluate(() => localStorage.setItem('test-api-offline', 'true'));
     await secondContext.setOffline(true);
     await meditation(second);
     await second.evaluate(async () => {
@@ -88,6 +90,7 @@ test('shares a character across devices and safely resolves offline changes', as
     await page.getByRole('button', { name: 'Đồng bộ ngay', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Đã đồng bộ' })).toBeVisible();
     apiOffline = false;
+    await second.evaluate(() => localStorage.removeItem('test-api-offline'));
     await secondContext.setOffline(false);
     await openAccount(second);
     await expect(second.getByRole('heading', { name: 'Chọn đạo lộ muốn tiếp tục' })).toBeVisible({

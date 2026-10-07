@@ -67,7 +67,7 @@ describe('shared web and Android accounts', () => {
       b = await f.register('chat_reader');
     const s = initialState(time);
     s.name = 'Kiếm Tâm';
-    s.stage = 6;
+    s.stage = 8;
     s.titles = { owned: ['realm-golden'], equipped: 'realm-golden', effects: true };
     await f.request('/api/save', a.token, { revision: 0, state: s }, 'PUT');
     expect((await f.request('/api/chat', undefined, { body: 'hello', world: 'all' })).status).toBe(
@@ -88,7 +88,7 @@ describe('shared web and Android accounts', () => {
           body: text,
           world: 'all',
           name: 'Giả mạo',
-          stage: 59,
+          stage: 79,
         })
       ).status,
     ).toBe(201);
@@ -99,7 +99,7 @@ describe('shared web and Android accounts', () => {
     expect(feed.messages).toHaveLength(1);
     expect(feed.messages[0]).toMatchObject({
       name: 'Kiếm Tâm',
-      stage: 6,
+      stage: 8,
       titleId: 'realm-golden',
       body: text,
       self: false,
@@ -158,7 +158,7 @@ describe('shared web and Android accounts', () => {
     low.name = 'Thanh Trúc';
     const high = initialState(time);
     high.name = 'Tinh Hà';
-    high.stage = 27;
+    high.stage = 36;
     high.titles.owned = ['realm-immortal'];
     high.titles.equipped = 'realm-immortal';
     await f.request('/api/save', a.token, { revision: 0, state: low }, 'PUT');
@@ -183,7 +183,7 @@ describe('shared web and Android accounts', () => {
       a = await f.register('boss_player'),
       b = await f.register('second_player');
     const s = initialState(time);
-    s.stage = 59;
+    s.stage = 79;
     s.name = 'Đạo Chủ';
     await f.request('/api/save', a.token, { revision: 0, state: s }, 'PUT');
     await f.request('/api/save', b.token, { revision: 0, state: s }, 'PUT');

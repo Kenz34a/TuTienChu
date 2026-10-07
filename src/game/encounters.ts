@@ -1,3 +1,4 @@
+import { PHASE_COUNT, MAX_STAGE, IMMORTAL_STAGE, DIVINE_STAGE, stagePower } from './stages';
 import { MAPS } from './data';
 import type { EnemyKind, GameState, World } from './types';
 import { DUNGEONS } from './expansion';
@@ -72,7 +73,7 @@ export const SECRET_AREAS: SecretArea[] = [
     world: 'earth',
     mapId: 'bamboo',
     name: 'Vô Danh Cổ Động',
-    minStage: 6,
+    minStage: 8,
     visitsNeeded: 5,
     hint: 'Tiếng chuông dưới lòng đất chỉ vọng lại với người đã đi qua sơn hà nhiều lần.',
     lore: 'Sau màn dây leo là một cổ động chưa từng được ghi trên bản đồ. Ngọc ấn đánh thức kẻ canh giữ ngủ quên.',
@@ -93,7 +94,7 @@ export const SECRET_AREAS: SecretArea[] = [
     world: 'immortal',
     mapId: 'gate',
     name: 'Đào Nguyên Cấm Cảnh',
-    minStage: 33,
+    minStage: 44,
     visitsNeeded: 5,
     hint: 'Có một đóa đào hoa không có bóng. Tìm dấu tích ấy qua những lần xuất hành tại Tiên Giới.',
     lore: 'Cánh đào mở lối sang một tiên cảnh bị phong ấn. Không có gió, chỉ có hơi thở của một cổ long.',
@@ -114,7 +115,7 @@ export const SECRET_AREAS: SecretArea[] = [
     world: 'divine',
     mapId: 'stars',
     name: 'Táng Thần Mật Vực',
-    minStage: 51,
+    minStage: 68,
     visitsNeeded: 5,
     hint: 'Một vì sao chưa từng tỏa sáng. Người từng khám phá Thần Giới sẽ nghe tiếng gọi từ đó.',
     lore: 'Cổ ngọc hóa thành một lối vào giữa tinh hà. Phía sau là nơi chôn cất vị thần đã nuốt cả thời gian.',

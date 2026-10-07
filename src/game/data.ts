@@ -1,3 +1,4 @@
+import { PHASE_COUNT, MAX_STAGE, IMMORTAL_STAGE, DIVINE_STAGE, stagePower } from './stages';
 import type { GameState, ItemId, RaceId, Slot, World } from './types';
 import { EXTRA_MAPS, EXTRA_NPCS, EXTRA_QUESTS, EXTRA_SECTS } from './expansion';
 
@@ -23,10 +24,11 @@ export const REALMS = [
   'Thần Vương',
   'Thần Đế',
 ];
-export const STAGES = ['Sơ kỳ', 'Trung kỳ', 'Đỉnh phong'];
-export const realmName = (stage: number) => `${REALMS[Math.floor(stage / 3)]} ${STAGES[stage % 3]}`;
-export const xpNeeded = (stage: number) => Math.round(100 * Math.pow(1.18, stage));
-export const stoneCost = (stage: number) => Math.round(40 * Math.pow(1.12, stage));
+export const STAGES = ['Sơ kỳ', 'Trung kỳ', 'Hậu kỳ', 'Đỉnh phong'];
+export const realmName = (stage: number) =>
+  `${REALMS[Math.floor(stage / PHASE_COUNT)]} ${STAGES[stage % PHASE_COUNT]}`;
+export const xpNeeded = (stage: number) => Math.round(100 * Math.pow(1.18, stagePower(stage)));
+export const stoneCost = (stage: number) => Math.round(40 * Math.pow(1.12, stagePower(stage)));
 export const WORLDS: {
   id: World;
   name: string;
@@ -45,14 +47,14 @@ export const WORLDS: {
     id: 'immortal',
     name: 'Tiên Giới',
     sub: 'Vượt phàm thành tiên',
-    minStage: 27,
+    minStage: 36,
     description: 'Vân hải vô tận, tiên cung ẩn hiện. Phía sau thiên môn là một thế giới mới.',
   },
   {
     id: 'divine',
     name: 'Thần Giới',
     sub: 'Chạm đến thiên đạo',
-    minStage: 48,
+    minStage: 64,
     description: 'Tinh hà trải rộng, cổ thần ngủ say. Ai sẽ viết lại trật tự của tam giới?',
   },
 ];
@@ -184,7 +186,7 @@ export const MAPS: MapData[] = [
     id: 'mountain',
     name: 'Vân Vụ Sơn',
     world: 'earth',
-    minStage: 3,
+    minStage: 4,
     subtitle: 'Mây phủ ngàn tầng núi',
     enemy: 'Xích Diễm Hổ',
     enemyTitle: 'Yêu tướng',
@@ -196,7 +198,7 @@ export const MAPS: MapData[] = [
     id: 'lake',
     name: 'Hàn Nguyệt Đàm',
     world: 'earth',
-    minStage: 9,
+    minStage: 12,
     subtitle: 'Ánh trăng dưới đáy hồ',
     enemy: 'Hàn Giao',
     enemyTitle: 'Yêu vương',
@@ -208,7 +210,7 @@ export const MAPS: MapData[] = [
     id: 'ruins',
     name: 'Cổ Kiếm Di Tích',
     world: 'earth',
-    minStage: 18,
+    minStage: 24,
     subtitle: 'Kiếm ý còn vang ngàn năm',
     enemy: 'Kiếm Linh',
     enemyTitle: 'Yêu hoàng',
@@ -220,7 +222,7 @@ export const MAPS: MapData[] = [
     id: 'gate',
     name: 'Nam Thiên Môn',
     world: 'immortal',
-    minStage: 27,
+    minStage: 36,
     subtitle: 'Một bước vượt phàm trần',
     enemy: 'Vân Sư',
     enemyTitle: 'Yêu đế',
@@ -232,7 +234,7 @@ export const MAPS: MapData[] = [
     id: 'peach',
     name: 'Bàn Đào Viên',
     world: 'immortal',
-    minStage: 30,
+    minStage: 40,
     subtitle: 'Hoa nở ba nghìn năm',
     enemy: 'Đào Yêu',
     enemyTitle: 'Yêu tiên',
@@ -244,7 +246,7 @@ export const MAPS: MapData[] = [
     id: 'sea',
     name: 'Vô Tận Vân Hải',
     world: 'immortal',
-    minStage: 36,
+    minStage: 48,
     subtitle: 'Mây là biển, hạc là thuyền',
     enemy: 'Cửu Dực Bằng',
     enemyTitle: 'Yêu thánh',
@@ -256,7 +258,7 @@ export const MAPS: MapData[] = [
     id: 'palace',
     name: 'Lăng Tiêu Tiên Cung',
     world: 'immortal',
-    minStage: 42,
+    minStage: 56,
     subtitle: 'Đạo vận giữa trời cao',
     enemy: 'Thiên Lôi Long',
     enemyTitle: 'Yêu tôn',
@@ -268,7 +270,7 @@ export const MAPS: MapData[] = [
     id: 'stars',
     name: 'Tinh Hà Cổ Lộ',
     world: 'divine',
-    minStage: 48,
+    minStage: 64,
     subtitle: 'Ngàn sao hóa đạo lộ',
     enemy: 'Thôn Tinh Thú',
     enemyTitle: 'Yêu thần',
@@ -280,7 +282,7 @@ export const MAPS: MapData[] = [
     id: 'abyss',
     name: 'Vực Thái Sơ',
     world: 'divine',
-    minStage: 51,
+    minStage: 68,
     subtitle: 'Nơi thời gian ngừng chảy',
     enemy: 'Hư Không Ma',
     enemyTitle: 'Yêu thần vương',
@@ -292,7 +294,7 @@ export const MAPS: MapData[] = [
     id: 'throne',
     name: 'Vạn Thần Điện',
     world: 'divine',
-    minStage: 54,
+    minStage: 72,
     subtitle: 'Vạn thần cùng cúi đầu',
     enemy: 'Cổ Thần Chi Ảnh',
     enemyTitle: 'Yêu thần hoàng',
@@ -304,7 +306,7 @@ export const MAPS: MapData[] = [
     id: 'chaos',
     name: 'Hồng Mông Chi Địa',
     world: 'divine',
-    minStage: 57,
+    minStage: 76,
     subtitle: 'Một niệm sinh vạn vật',
     enemy: 'Hỗn Độn Tổ Yêu',
     enemyTitle: 'Yêu tổ',
@@ -374,7 +376,7 @@ export const NPCS = [
     role: 'Kiếm khách bí ẩn',
     symbol: '剑',
     mapId: 'mountain',
-    minStage: 3,
+    minStage: 4,
     dialogue:
       '“Kiếm mạnh chưa chắc tâm vững. Mang cổ ngọc đến đây, ta sẽ cho ngươi biết câu chuyện phía sau vết kiếm này.”',
     gift: 'key' as ItemId,
@@ -386,7 +388,7 @@ export const NPCS = [
     role: 'Người giữ tiên môn',
     symbol: '月',
     mapId: 'gate',
-    minStage: 27,
+    minStage: 36,
     dialogue:
       '“Cuối cùng đạo hữu cũng đến. Tiên giới rộng lớn hơn điều chúng ta tưởng. Hãy giữ một phần phàm tâm bên mình.”',
     gift: 'herb' as ItemId,
@@ -398,7 +400,7 @@ export const NPCS = [
     role: 'Kẻ chứng kiến thời gian',
     symbol: '玄',
     mapId: 'stars',
-    minStage: 48,
+    minStage: 64,
     dialogue:
       '“Thần cũng từng là người. Vạn vật hữu hạn, chỉ đạo tâm trường tồn. Ngươi đã sẵn sàng viết câu chuyện của chính mình?”',
     gift: 'essence' as ItemId,
@@ -472,11 +474,11 @@ export const QUESTS: Quest[] = [
     name: `${realm} · Trừ yêu vệ đạo`,
     description: `Đạt ${realm}, tích lũy ${(i + 1) * 3} lần thắng yêu quái.`,
     category: 'main',
-    minStage: i * 3,
+    minStage: i * PHASE_COUNT,
     target: (i + 1) * 3,
     progress: (s) => s.metrics.kills,
     stones: Math.round(100 * Math.pow(1.3, i)),
-    xp: Math.round(xpNeeded(i * 3) * 0.4),
+    xp: Math.round(xpNeeded(i * PHASE_COUNT) * 0.4),
     item: i % 2 ? 'elixir' : 'essence',
   })),
   {
@@ -534,7 +536,7 @@ export const QUESTS: Quest[] = [
     name: 'Cổ ngọc và một lời thề',
     description: 'Gặp Mặc Vô Trần và sở hữu ít nhất một cổ ngọc.',
     category: 'hidden',
-    minStage: 3,
+    minStage: 4,
     target: 1,
     progress: (s) => Math.min(1, s.inventory.key || 0),
     stones: 350,

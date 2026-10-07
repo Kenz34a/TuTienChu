@@ -5,6 +5,7 @@ import { stats } from '../src/game/engine';
 import { sectInfo } from '../src/game/data';
 import { WORLD_BOSSES, bossCycle, dungeonClears, currencyReward } from '../src/game/expansion';
 import type { GameState } from '../src/game/types';
+import { stagePower } from '../src/game/stages';
 
 export function attachCommunity(
   app: express.Express,
@@ -18,6 +19,9 @@ export function attachCommunity(
     CREATE TABLE IF NOT EXISTS boss_contributions (boss_id TEXT NOT NULL, cycle INTEGER NOT NULL, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, damage INTEGER NOT NULL DEFAULT 0, last_hit INTEGER NOT NULL DEFAULT 0, claimed INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (boss_id, cycle, user_id));
     CREATE INDEX IF NOT EXISTS profile_ranking ON profiles(stage DESC, xp DESC, power DESC);
     CREATE INDEX IF NOT EXISTS contribution_rewards ON boss_contributions(user_id, claimed);`);
+  db.exec(
+    'CREATE TABLE IF NOT EXISTS boss_overrides(id TEXT PRIMARY KEY,cycle INTEGER NOT NULL,until_at INTEGER NOT NULL)',
+  );
   const updateProfile = (id: string, s: GameState) => {
     const st = stats(s);
     db.prepare(
@@ -45,8 +49,11 @@ export function attachCommunity(
   }
   type BossRow = { hp: number; max_hp: number };
   const getBoss = (boss: (typeof WORLD_BOSSES)[number], time: number) => {
-    const cycle = bossCycle(time, boss.offset);
-    const maxHp = Math.round(1200 * 1.15 ** boss.stage);
+    const override = db
+      .prepare('SELECT cycle,until_at FROM boss_overrides WHERE id=? AND until_at>?')
+      .get(boss.id, time) as { cycle: number; until_at: number } | undefined;
+    const cycle = override?.cycle ?? bossCycle(time, boss.offset);
+    const maxHp = Math.round(1200 * 1.15 ** stagePower(boss.stage));
     db.prepare('INSERT OR IGNORE INTO world_bosses VALUES (?, ?, ?, ?)').run(
       boss.id,
       cycle,
@@ -62,7 +69,7 @@ export function attachCommunity(
       hp: row.hp,
       maxHp: row.max_hp,
       endsAt: cycle + 15 * 60000,
-      respawnsAt: cycle + 3600000,
+      respawnsAt: override?.until_at ?? cycle + 3600000,
       active: time < cycle + 15 * 60000 && row.hp > 0,
     };
   };
@@ -224,8 +231,8 @@ export function attachCommunity(
     if (saved.revision !== req.body.revision)
       return res.status(409).json({ message: 'Tiến trình đã thay đổi. Hãy đồng bộ rồi nhận lại.' });
     const s = decodeSave(saved.game_json);
-    s.stones += Math.round(300 * 1.14 ** boss.stage);
-    s.lingqi = Math.min(1e9, s.lingqi + 50 + boss.stage * 5);
+    s.stones += Math.round(300 * 1.14 ** stagePower(boss.stage));
+    s.lingqi = Math.min(1e9, s.lingqi + 50 + stagePower(boss.stage) * 5);
     s.inventory.essence = (s.inventory.essence || 0) + 3;
     s.worldBossClaims++;
     currencyReward(s, boss.stage, 5);
@@ -254,5 +261,31 @@ export function attachCommunity(
     }
     res.json({ revision: saved.revision + 1, state: s, updatedAt: now() });
   });
-  return { updateProfile };
+  const listBosses = () => WORLD_BOSSES.map((b) => getBoss(b, now()));
+  const controlBoss = (id: string, action: string) => {
+    const boss = WORLD_BOSSES.find((b) => b.id === id);
+    if (!boss) return null;
+    let current = getBoss(boss, now());
+    if (action === 'respawn') {
+      let cycle = now();
+      while (db.prepare('SELECT 1 FROM world_bosses WHERE id=? AND cycle=?').get(id, cycle))
+        cycle++;
+      db.prepare('INSERT INTO world_bosses VALUES(?,?,?,?)').run(
+        id,
+        cycle,
+        current.maxHp,
+        current.maxHp,
+      );
+      db.prepare(
+        'INSERT INTO boss_overrides VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET cycle=excluded.cycle,until_at=excluded.until_at',
+      ).run(id, cycle, bossCycle(now(), boss.offset) + 3600000);
+    } else
+      db.prepare('UPDATE world_bosses SET hp=? WHERE id=? AND cycle=?').run(
+        action === 'defeat' ? 0 : current.maxHp,
+        id,
+        current.cycle,
+      );
+    return getBoss(boss, now());
+  };
+  return { updateProfile, listBosses, controlBoss };
 }

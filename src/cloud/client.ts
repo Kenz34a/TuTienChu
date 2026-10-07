@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { decodeSave } from '../game/storage';
 import type { GameState } from '../game/types';
+import { initialState } from '../game/engine';
 
 export const androidApp = Capacitor.isNativePlatform();
 export const desktopApp = typeof window !== 'undefined' && window.vanTienDesktop?.platform === 'pc';
@@ -18,6 +19,7 @@ export interface Account {
   server: string;
   revision: number;
   baseline: string | null;
+  admin?: boolean;
 }
 export class ApiError extends Error {
   constructor(
@@ -66,6 +68,26 @@ export function fingerprint(state: GameState) {
   const { lastTick: _time, hp: _hp, stamina: _stamina, ...progress } = state;
   return JSON.stringify({ ...progress, training: { active: state.training.active } });
 }
+export function migrateBaseline(mark: string | null): string | null {
+  if (!mark) return mark;
+  try {
+    const v = JSON.parse(mark);
+    if (v.version !== 1) return mark;
+    const defaults = initialState();
+    const state = {
+      ...defaults,
+      ...v,
+      training: {
+        ...defaults.training,
+        ...v.training,
+        totalSeconds: (v.metrics?.meditations || 0) * 60,
+      },
+    };
+    return fingerprint(decodeSave(JSON.stringify(state)));
+  } catch {
+    return mark;
+  }
+}
 export function readAccount(): Account | null {
   try {
     const a = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || 'null');
@@ -78,7 +100,7 @@ export function readAccount(): Account | null {
       (a.baseline !== null && typeof a.baseline !== 'string')
     )
       return null;
-    return { ...a, server: validateServer(a.server) };
+    return { ...a, baseline: migrateBaseline(a.baseline), server: validateServer(a.server) };
   } catch {
     return null;
   }

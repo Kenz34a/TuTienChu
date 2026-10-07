@@ -1,3 +1,4 @@
+import { PHASE_COUNT, MAX_STAGE } from './game/stages';
 import { ArrowUpRight, BookOpen, Check, LockKeyhole, Sparkles } from 'lucide-react';
 import './cultivation.css';
 import { REALM_METHODS, currentRealmMethod } from './game/realmMethods';
@@ -21,9 +22,9 @@ export function CultivationGuide({
           <span className="eyebrow">HAI MƯƠI CON ĐƯỜNG ĐẠI ĐẠO</span>
           <h2>Tu luyện có pháp. Đột phá có đường.</h2>
           <p>
-            Trong mỗi cảnh giới, tu luyện qua Sơ kỳ, Trung kỳ rồi Đỉnh phong. Đầy tu vi vẫn cần đủ
-            linh khí và thạch. Mỗi lần thành công sẽ trừ đúng chi phí, không có tỷ lệ thất bại ngẫu
-            nhiên.
+            Trong mỗi cảnh giới, tu luyện qua Sơ kỳ, Trung kỳ, Hậu kỳ rồi Đỉnh phong. Đầy tu vi vẫn
+            cần đủ linh khí và thạch. Mỗi lần thành công sẽ trừ đúng chi phí, không có tỷ lệ thất
+            bại ngẫu nhiên.
           </p>
         </div>
       </section>
@@ -45,7 +46,7 @@ export function CultivationGuide({
       <div className="realm-method-grid">
         {REALM_METHODS.map((m, index) => (
           <article
-            className={`panel realm-method-card ${index === Math.floor(s.stage / 3) ? 'current' : ''}`}
+            className={`panel realm-method-card ${index === Math.floor(s.stage / PHASE_COUNT) ? 'current' : ''}`}
             key={m.realm}
             aria-label={`Cách đột phá ${m.realm}`}
           >
@@ -55,7 +56,7 @@ export function CultivationGuide({
                 <h3>{m.realm}</h3>
                 <small>
                   {s.stage >= m.minStage ? <Check size={12} /> : <LockKeyhole size={12} />}
-                  {index === Math.floor(s.stage / 3)
+                  {index === Math.floor(s.stage / PHASE_COUNT)
                     ? 'Đang tu luyện'
                     : s.stage >= m.minStage
                       ? 'Đã đạt'
@@ -67,7 +68,7 @@ export function CultivationGuide({
             <h4>{m.name}</h4>
             <p>{m.lore}</p>
             <div className="realm-method-phases">
-              <strong>Sơ kỳ → Trung kỳ → Đỉnh phong</strong>
+              <strong>Sơ kỳ → Trung kỳ → Hậu kỳ → Đỉnh phong</strong>
               <p>{m.phases}</p>
             </div>
             <strong className="realm-method-ascent">
@@ -82,7 +83,7 @@ export function CultivationGuide({
                 return (
                   <p key={phase}>
                     {phase}:{' '}
-                    {stage === 59
+                    {stage === MAX_STAGE
                       ? 'Cảnh giới tối thượng'
                       : `${xpNeeded(stage).toLocaleString('vi-VN')} tu vi · ${qiCost(stage)} linh khí · ${stoneCost(stage).toLocaleString('vi-VN')} linh thạch${coin ? ` · ${coin.amount} ${tierLabel(coin.kind)}` : ''}`}
                   </p>

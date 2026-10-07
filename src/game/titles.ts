@@ -1,3 +1,4 @@
+import { legacyStage } from './stages';
 import { MAPS } from './data';
 import { DUNGEONS, MANUALS } from './expansion';
 import type { GameState } from './types';
@@ -79,7 +80,7 @@ export const TITLES: CultivationTitle[] = [
     'health',
     0.04,
     'Đạt Trúc Cơ Sơ kỳ',
-    3,
+    4,
     (s) => s.stage,
   ),
   title(
@@ -91,7 +92,7 @@ export const TITLES: CultivationTitle[] = [
     'cultivation',
     0.05,
     'Đạt Kim Đan Sơ kỳ',
-    6,
+    8,
     (s) => s.stage,
   ),
   title(
@@ -103,7 +104,7 @@ export const TITLES: CultivationTitle[] = [
     'defense',
     0.06,
     'Đạt Nguyên Anh Sơ kỳ',
-    9,
+    12,
     (s) => s.stage,
   ),
   title(
@@ -115,7 +116,7 @@ export const TITLES: CultivationTitle[] = [
     'attack',
     0.07,
     'Đạt Hóa Thần Sơ kỳ',
-    12,
+    16,
     (s) => s.stage,
   ),
   title(
@@ -127,7 +128,7 @@ export const TITLES: CultivationTitle[] = [
     'cultivation',
     0.08,
     'Đạt Đại Thừa Sơ kỳ',
-    21,
+    28,
     (s) => s.stage,
   ),
   title(
@@ -139,7 +140,7 @@ export const TITLES: CultivationTitle[] = [
     'health',
     0.1,
     'Đạt Chân Tiên Sơ kỳ',
-    27,
+    36,
     (s) => s.stage,
   ),
   title(
@@ -151,7 +152,7 @@ export const TITLES: CultivationTitle[] = [
     'attack',
     0.1,
     'Đạt Thái Ất Sơ kỳ',
-    36,
+    48,
     (s) => s.stage,
   ),
   title(
@@ -163,7 +164,7 @@ export const TITLES: CultivationTitle[] = [
     'defense',
     0.12,
     'Đạt Tiên Đế Sơ kỳ',
-    45,
+    60,
     (s) => s.stage,
   ),
   title(
@@ -175,7 +176,7 @@ export const TITLES: CultivationTitle[] = [
     'cultivation',
     0.12,
     'Đạt Chân Thần Sơ kỳ',
-    48,
+    64,
     (s) => s.stage,
   ),
   title(
@@ -187,7 +188,7 @@ export const TITLES: CultivationTitle[] = [
     'health',
     0.18,
     'Đạt Thần Đế Đỉnh phong',
-    59,
+    79,
     (s) => s.stage,
   ),
 

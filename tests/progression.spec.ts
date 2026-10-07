@@ -27,23 +27,23 @@ async function saved(page: Page) {
   return page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), KEY);
 }
 
-test('Kim Dan shows exact missing resources and progresses through all three phases', async ({
+test('Kim Dan shows exact missing resources and progresses through all four phases', async ({
   page,
 }) => {
   const time = Date.now();
   await page.clock.install({ time });
   await page.clock.pauseAt(time + 1000);
-  await seed(page, { stage: 6, xp: xpNeeded(6) * 3, lingqi: 0, stones: 10000 });
+  await seed(page, { stage: 8, xp: xpNeeded(8) * 3, lingqi: 0, stones: 10000 });
   const requirements = page.getByLabel('Yêu cầu đột phá', { exact: true });
-  await expect(requirements).toContainText(`Thiếu ${qiCost(6)}`);
+  await expect(requirements).toContainText(`Thiếu ${qiCost(8)}`);
   await expect(requirements).not.toContainText('Tiên thạch');
   await page.getByRole('button', { name: 'Đột phá', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: /Còn thiếu.*linh khí/ })).toBeVisible();
-  expect((await saved(page)).stage).toBe(6);
+  expect((await saved(page)).stage).toBe(8);
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
   await page.clock.fastForward(18 * 60000);
-  for (const stage of [6, 7, 8]) {
-    if (stage > 6) await page.clock.fastForward(15 * 60000);
+  for (const stage of [8, 9, 10, 11]) {
+    if (stage > 8) await page.clock.fastForward(15 * 60000);
     await expect(requirements).toContainText('Đã đủ tài nguyên');
     const before = await saved(page);
     await page.getByRole('button', { name: 'Đột phá', exact: true }).click();
@@ -58,17 +58,17 @@ test('Kim Dan shows exact missing resources and progresses through all three pha
 test('Kim Dan stone shortage is visible and can be checked without a disabled dead end', async ({
   page,
 }) => {
-  await seed(page, { stage: 6, xp: xpNeeded(6), lingqi: qiCost(6), stones: 0 });
-  await expect(page.getByLabel('Yêu cầu đột phá')).toContainText(`Thiếu ${stoneCost(6)}`);
+  await seed(page, { stage: 8, xp: xpNeeded(8), lingqi: qiCost(8), stones: 0 });
+  await expect(page.getByLabel('Yêu cầu đột phá')).toContainText(`Thiếu ${stoneCost(8)}`);
   const button = page.getByRole('button', { name: 'Đột phá', exact: true });
   await expect(button).toBeEnabled();
   await button.click();
   await expect(page.getByRole('status').filter({ hasText: /Còn thiếu.*linh thạch/ })).toBeVisible();
-  expect((await saved(page)).stage).toBe(6);
+  expect((await saved(page)).stage).toBe(8);
 });
 
 test('fifty titles unlock, equip, preview and persist effects on character', async ({ page }) => {
-  await seed(page, { stage: 6, metrics: { ...initialState().metrics, kills: 10 } });
+  await seed(page, { stage: 8, metrics: { ...initialState().metrics, kills: 10 } });
   await view(page, 'Danh hiệu');
   await expect(page.locator('.honor-card')).toHaveCount(50);
   const card = page.getByRole('article', { name: 'Kim Đan Chân Nhân', exact: true });
@@ -99,10 +99,10 @@ test('cultivation guide lists twenty realm methods and optional aids change the 
   page,
 }) => {
   await seed(page, {
-    stage: 6,
-    xp: xpNeeded(6),
-    lingqi: Math.ceil(qiCost(6) * 0.8),
-    stones: stoneCost(6),
+    stage: 8,
+    xp: xpNeeded(8),
+    lingqi: Math.ceil(qiCost(8) * 0.8),
+    stones: stoneCost(8),
     inventory: { ...initialState().inventory, elixir: 1 },
   });
   await page.getByRole('main').getByRole('button', { name: 'Cách đột phá', exact: true }).click();
@@ -115,7 +115,7 @@ test('cultivation guide lists twenty realm methods and optional aids change the 
   await expect(page.getByLabel('Yêu cầu đột phá')).toContainText('Tụ Linh Đan');
   await expect(page.getByLabel('Yêu cầu đột phá')).toContainText('Đã đủ tài nguyên');
   await page.getByRole('button', { name: 'Đột phá', exact: true }).click();
-  await expect.poll(async () => (await saved(page)).stage).toBe(7);
+  await expect.poll(async () => (await saved(page)).stage).toBe(9);
   expect((await saved(page)).inventory.elixir).toBe(0);
 });
 
@@ -132,7 +132,7 @@ test('dashboard exposes rankings and world chat exchanges real messages between 
   const a = await register.json();
   const s = initialState();
   s.name = `Kiếm Tâm ${user.slice(-4)}`;
-  s.stage = 6;
+  s.stage = 8;
   s.titles = {
     owned: ['realm-foundation', 'realm-golden'],
     equipped: 'realm-golden',
@@ -240,7 +240,7 @@ test('root awakening, purification and ancient inheritance persist in the save',
   page,
 }) => {
   await seed(page, {
-    stage: 3,
+    stage: 4,
     stones: 5000,
     lingqi: 500,
     manuals: { breath: 3 },
@@ -262,7 +262,7 @@ test('root awakening, purification and ancient inheritance persist in the save',
 
 test('player founds and upgrades a sect and recruits a real saved NPC member', async ({ page }) => {
   await seed(page, {
-    stage: 3,
+    stage: 4,
     stones: 10000,
     inventory: { ore: 100, herb: 8, pill: 3, essence: 2 },
   });
@@ -291,7 +291,7 @@ test('dungeon combat advances across three waves and survives a mid-fight reload
   page,
 }) => {
   const s = initialState();
-  s.stage = 9;
+  s.stage = 12;
   s.hp = stats(s).maxHp;
   s.inventory.pill = 20;
   await seed(page, s);
@@ -335,7 +335,7 @@ test('leaderboard, top online and login notices use actual server accounts', asy
   const account = await registered.json();
   const s = initialState();
   s.name = `Tinh Hà ${username.slice(-5)}`;
-  s.stage = 27;
+  s.stage = 36;
   expect(
     (
       await page.request.put('/api/save', {

@@ -1,3 +1,4 @@
+import { IMMORTAL_STAGE, DIVINE_STAGE } from './game/stages';
 import { useEffect, useRef, useState } from 'react';
 import { LogIn, MessageCircle, Send, WifiOff } from 'lucide-react';
 import { api } from './cloud/client';
@@ -26,8 +27,8 @@ interface ChatResponse {
 const channels = [
   { id: 'all', name: 'Tam giới', minStage: 0 },
   { id: 'earth', name: 'Địa giới', minStage: 0 },
-  { id: 'immortal', name: 'Tiên giới', minStage: 27 },
-  { id: 'divine', name: 'Thần giới', minStage: 48 },
+  { id: 'immortal', name: 'Tiên giới', minStage: IMMORTAL_STAGE },
+  { id: 'divine', name: 'Thần giới', minStage: DIVINE_STAGE },
 ];
 
 export function ChatPanel({

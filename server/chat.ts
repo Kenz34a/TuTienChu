@@ -1,3 +1,4 @@
+import { IMMORTAL_STAGE, DIVINE_STAGE } from '../src/game/stages';
 import type express from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { decodeSave } from '../src/game/storage';
@@ -73,7 +74,10 @@ export function attachChat(
     if (!saved?.game_json)
       return res.status(409).json({ message: 'Hãy đồng bộ nhân vật trước khi gửi tin nhắn.' });
     const s = decodeSave(saved.game_json);
-    if ((world === 'immortal' && s.stage < 27) || (world === 'divine' && s.stage < 48))
+    if (
+      (world === 'immortal' && s.stage < IMMORTAL_STAGE) ||
+      (world === 'divine' && s.stage < DIVINE_STAGE)
+    )
       return res.status(403).json({ message: 'Chưa đủ tu vi để gửi tin ở giới này.' });
     db.exec('BEGIN IMMEDIATE');
     try {

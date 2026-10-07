@@ -187,9 +187,7 @@ describe('Hidden areas and boss combat', () => {
       expect(won.inventory.essence).toBe(5);
       expect(won.inventory.elixir).toBe(2);
       expect(won.bag).toHaveLength(3);
-      expect(won.bag.at(-1)!.rank).toBe(
-        Math.min(8, Math.floor(SECRET_AREAS[index].minStage / 7) + 2),
-      );
+      expect(won.bag.at(-1)!.rank).toBe([2, 6, 8][index]);
       expect(won.stones).toBeGreaterThan(original.stones);
       expect(won.metrics.kills).toBe(1);
       expect(perform(won, { type: 'challenge', secretId: SECRET_AREAS[index].id }).ok).toBe(false);

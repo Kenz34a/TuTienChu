@@ -1,3 +1,4 @@
+import { PHASE_COUNT, MAX_STAGE, stagePower } from './stages';
 import {
   ITEMS,
   MAPS,
@@ -44,7 +45,7 @@ export const dayKey = (now = Date.now()) =>
   new Date(now).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
 export function initialState(now = Date.now()): GameState {
   return {
-    version: 1,
+    version: 2,
     name: 'Vô Danh',
     race: 'human',
     raceChosen: false,
@@ -103,7 +104,7 @@ export function initialState(now = Date.now()): GameState {
 
 export const gearPower = (g: Gear) => Math.round(5 * Math.pow(2.05, g.rank) * (1 + 0.16 * g.level));
 export function stats(s: GameState): Stats {
-  const growth = Math.pow(1.15, s.stage);
+  const growth = Math.pow(1.15, stagePower(s.stage));
   let maxHp = 110 * growth,
     attack = 18 * growth,
     defense = 5 * growth;
@@ -226,7 +227,7 @@ export function perform(
     return { state: s, message, ok: true };
   };
   const startBattle = (enemy: Enemy, enemyStage: number, place: string, secretId?: string) => {
-    const growth = Math.pow(1.15, enemyStage),
+    const growth = Math.pow(1.15, stagePower(enemyStage)),
       hp = Math.round(65 * growth * enemy.hpMultiplier);
     s.battle = {
       enemyId: enemy.id,
@@ -335,7 +336,7 @@ export function perform(
       s.inheritances.push(legacy.id);
       s.manuals[legacy.manual] = Math.min(10, (s.manuals[legacy.manual] || 0) + 1);
       addItem(s, 'essence', 3);
-      s.stones += 200 + legacy.minStage * 50;
+      s.stones += 200 + stagePower(legacy.minStage) * 50;
       if (legacy.id === 'origin-legacy' && s.spiritualRoot) s.spiritualRoot.id = 'chaos';
       return done(
         `Nhận ${legacy.name}! ${legacy.lore} Bí kíp được nâng một tầng; gia trì truyền thừa vĩnh viễn đã mở.`,
@@ -368,7 +369,7 @@ export function perform(
               );
               s.lingqi = Math.min(
                 1e9,
-                s.lingqi + Math.floor((6 + s.stage) * stats(s).cultivation * bonus),
+                s.lingqi + Math.floor((6 + stagePower(s.stage)) * stats(s).cultivation * bonus),
               );
               s.metrics.meditations++;
               if (dayKey(cursor) === dayKey(action.now)) s.daily.meditations++;
@@ -391,7 +392,7 @@ export function perform(
         return fail(
           'Bạn đang ngồi thiền. Tu vi và linh khí tích lũy mỗi phút, không tăng khi nhấn lại.',
         );
-      if (s.stage === 59 && s.xp >= xpNeeded(59))
+      if (s.stage === MAX_STAGE && s.xp >= xpNeeded(MAX_STAGE))
         return fail('Bạn đã chạm đến đỉnh cao của tam giới. Hãy khám phá đạo lộ còn lại.');
       s.training.active = true;
       s.lastTick = Math.max(s.lastTick, now);
@@ -425,9 +426,9 @@ export function perform(
       s.metrics.breakthroughs++;
       s.hp = stats(s).maxHp;
       s.stamina = Math.min(100, s.stamina + 20);
-      if (s.stage % 3 === 0) addItem(s, 'elixir');
+      if (s.stage % PHASE_COUNT === 0) addItem(s, 'elixir');
       return done(
-        `${s.stage % 3 === 0 ? 'Thiên kiếp tan, đạo cơ thành! ' : 'Linh khí hội tụ! '}Bạn đã đạt ${realmName(s.stage)}.`,
+        `${s.stage % PHASE_COUNT === 0 ? 'Thiên kiếp tan, đạo cơ thành! ' : 'Linh khí hội tụ! '}Bạn đã đạt ${realmName(s.stage)}.`,
         'realm',
       );
     }
@@ -478,7 +479,7 @@ export function perform(
           'battle',
         );
       }
-      const reward = Math.round(18 * Math.pow(1.13, map.minStage)),
+      const reward = Math.round(18 * Math.pow(1.13, stagePower(map.minStage))),
         item = rng() < 0.6 ? 'herb' : 'ore';
       s.stones += reward;
       const currency = currencyReward(s, map.minStage);
@@ -547,7 +548,9 @@ export function perform(
       if (b.hp <= 0) {
         const enemy = ALL_ENEMIES.find((enemy) => enemy.id === b.enemyId)!;
         const enemyStage = b.enemyStage;
-        const stones = Math.round(25 * Math.pow(1.14, enemyStage) * enemy.rewardMultiplier),
+        const stones = Math.round(
+            25 * Math.pow(1.14, stagePower(enemyStage)) * enemy.rewardMultiplier,
+          ),
           xp = Math.round(xpNeeded(enemyStage) * 0.08 * enemy.rewardMultiplier);
         s.stones += stones;
         const currency = currencyReward(s, enemyStage, enemy.rewardMultiplier);
@@ -574,7 +577,7 @@ export function perform(
         }
         const rank = Math.min(
           8,
-          Math.floor(enemyStage / 7) + (b.kind === 'boss' ? 2 : rng() < 0.12 ? 1 : 0),
+          Math.floor(stagePower(enemyStage) / 7) + (b.kind === 'boss' ? 2 : rng() < 0.12 ? 1 : 0),
         );
         const drop = b.kind === 'boss' || rng() < (b.kind === 'elite' ? 0.75 : 0.45);
         const gear = drop && addGear(s, rank, rng);
@@ -602,11 +605,15 @@ export function perform(
           }
           s.dungeons.active = null;
           s.dungeons.clears[dungeon.id] = (s.dungeons.clears[dungeon.id] || 0) + 1;
-          const qi = 30 + dungeon.minStage * 6;
+          const qi = 30 + stagePower(dungeon.minStage) * 6;
           s.lingqi += qi;
           addItem(s, 'essence', 3);
           addItem(s, 'elixir');
-          const rewardGear = addGear(s, Math.min(8, Math.floor(dungeon.minStage / 7) + 1), rng);
+          const rewardGear = addGear(
+            s,
+            Math.min(8, Math.floor(stagePower(dungeon.minStage) / 7) + 1),
+            rng,
+          );
           if (!rewardGear) addItem(s, 'essence', 3);
           return done(
             `Hoàn thành ${dungeon.name}! +${xp} tu vi, +${stones} linh thạch, +${qi} linh khí, 3 tinh hoa, 1 Tụ Linh Đan${rewardGear ? ' và trang bị phẩm cao' : ' và 3 tinh hoa do ba lô đầy'}.`,
@@ -692,7 +699,7 @@ export function perform(
       s.stones -= cost;
       s.metrics.crafts++;
       if (action.recipe === 'gear')
-        addGear(s, Math.min(8, Math.floor(s.stage / 7)) + (rng() < 0.2 ? 1 : 0), rng);
+        addGear(s, Math.min(8, Math.floor(stagePower(s.stage) / 7)) + (rng() < 0.2 ? 1 : 0), rng);
       else addItem(s, action.recipe);
       return done(
         `Chế tạo thành công: ${action.recipe === 'gear' ? 'một trang bị ngẫu nhiên theo tu vi' : ITEMS[action.recipe].name}.`,
@@ -830,7 +837,7 @@ export function perform(
         return fail('Hãy rời tông môn hiện tại. Bạn chỉ có thể sáng lập một sơn môn.');
       const name = action.name.trim();
       if (name.length < 2 || name.length > 24) return fail('Tên tông môn cần 2–24 ký tự.');
-      if (s.stage < 3 || s.stones < 600 || (s.inventory.ore || 0) < 10)
+      if (s.stage < PHASE_COUNT || s.stones < 600 || (s.inventory.ore || 0) < 10)
         return fail('Cần Trúc Cơ Sơ kỳ, 600 linh thạch và 10 huyền thiết để khai sơn.');
       s.stones -= 600;
       takeItem(s, 'ore', 10);

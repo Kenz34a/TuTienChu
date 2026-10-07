@@ -1,3 +1,4 @@
+import { MAX_STAGE } from './game/stages';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { QUESTS, questClaimed, realmName, stoneCost, xpNeeded } from './game/data';
 import { qiCost, canPayBreakthroughTier } from './game/expansion';
@@ -77,7 +78,7 @@ export function useNotifications(
           text: `Đã mở danh hiệu “${title.name}”. Vào Danh hiệu để trang bị gia trì và hiệu ứng.`,
         });
     if (
-      state.stage < 59 &&
+      state.stage < MAX_STAGE &&
       state.xp >= xpNeeded(state.stage) &&
       state.lingqi >= qiCost(state.stage) &&
       state.stones >= stoneCost(state.stage) &&

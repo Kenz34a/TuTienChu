@@ -1,3 +1,4 @@
+import { PHASE_COUNT, MAX_STAGE, stagePower } from './game/stages';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowDownToLine,
@@ -21,6 +22,7 @@ import {
   FlaskConical,
   Footprints,
   Gem,
+  Gift,
   Hammer,
   Heart,
   LayoutDashboard,
@@ -62,6 +64,8 @@ import { CurrencyPanel, LineagePanel } from './LineagePanel';
 import { TitleBadge, TitlePanel } from './TitlePanel';
 import { ChatPanel } from './ChatPanel';
 import { CultivationGuide } from './CultivationGuide';
+import { GiftPanel } from './GiftPanel';
+import { useServerStatus } from './cloud/useServerStatus';
 import './cultivation.css';
 import { equippedTitle } from './game/titles';
 import { BREAKTHROUGH_PATHS, breakthroughRequirements } from './game/progression';
@@ -116,7 +120,8 @@ type View =
   | 'lineage'
   | 'titles'
   | 'chat'
-  | 'cultivation';
+  | 'cultivation'
+  | 'gifts';
 type Dialog =
   | 'settings'
   | 'help'
@@ -200,6 +205,12 @@ const navigation = [
     label: 'Tu luyện & đột phá',
     icon: BookOpen,
     subtitle: 'Pháp môn riêng cho từng cảnh giới',
+  },
+  {
+    id: 'gifts' as View,
+    label: 'Quà tặng & giftcode',
+    icon: Gift,
+    subtitle: 'Nhận cơ duyên từ admin máy chủ',
   },
 ];
 const fmt = (n: number) => Math.floor(n).toLocaleString('vi-VN');
@@ -506,6 +517,7 @@ export default function App() {
   const game = useGame(),
     { state: s, act, notice, tell } = game;
   const cloud = useCloud(s, game.restoreCloud, game.storageBlocked);
+  const serverStatus = useServerStatus(cloud.account?.server || cloud.server);
   const community = useCommunity(cloud);
   const alerts = useNotifications(
     s,
@@ -727,7 +739,7 @@ export default function App() {
                 <strong>{s.name}</strong>
                 <TitleBadge title={honor} animated={s.titles.effects} compact />
                 <small>
-                  {REALMS[Math.floor(s.stage / 3)]} · {STAGES[s.stage % 3]}
+                  {REALMS[Math.floor(s.stage / PHASE_COUNT)]} · {STAGES[s.stage % PHASE_COUNT]}
                 </small>
               </span>
             </button>
@@ -861,6 +873,23 @@ export default function App() {
             </button>
           </div>
 
+          {(serverStatus?.message || serverStatus?.maintenance) && (
+            <section
+              className={`server-announcement ${serverStatus.maintenance ? 'maintenance' : ''}`}
+              aria-label="Thông báo máy chủ"
+            >
+              <Bell size={19} />
+              <div>
+                <strong>
+                  {serverStatus.maintenance ? 'Máy chủ đang bảo trì' : 'Thông báo từ admin'}
+                </strong>
+                <p>
+                  {serverStatus.message ||
+                    'Tiến trình cục bộ vẫn được giữ. Các chức năng máy chủ tạm ngừng.'}
+                </p>
+              </div>
+            </section>
+          )}
           {view === 'dashboard' && (
             <div className="community-quicklinks" aria-label="Tính năng nổi bật">
               <button onClick={() => moveTo('community')}>
@@ -878,6 +907,10 @@ export default function App() {
               <button onClick={() => moveTo('cultivation')}>
                 <BookOpen size={18} />
                 Cách đột phá
+              </button>
+              <button onClick={() => moveTo('gifts')}>
+                <Gift size={18} />
+                Nhập giftcode
               </button>
             </div>
           )}
@@ -924,8 +957,8 @@ export default function App() {
                   <span>
                     <small>Cảnh giới hiện tại</small>
                     <strong>
-                      {REALMS[Math.floor(s.stage / 3)]}
-                      <em>{STAGES[s.stage % 3]}</em>
+                      {REALMS[Math.floor(s.stage / PHASE_COUNT)]}
+                      <em>{STAGES[s.stage % PHASE_COUNT]}</em>
                     </strong>
                   </span>
                   <button
@@ -1030,15 +1063,15 @@ export default function App() {
                         {ready ? 'Đạo cơ đã vững' : 'Linh khí đang hội tụ'}
                       </Tag>
                       <h3>
-                        {REALMS[Math.floor(s.stage / 3)]}
-                        <span>{STAGES[s.stage % 3]}</span>
+                        {REALMS[Math.floor(s.stage / PHASE_COUNT)]}
+                        <span>{STAGES[s.stage % PHASE_COUNT]}</span>
                       </h3>
                       <p className="cultivation-progress">
                         {fmt(s.xp)}
                         <span> / {fmt(needed)} tu vi</span>
                       </p>
                       <p className="next-realm">
-                        {s.stage === 59 ? (
+                        {s.stage === MAX_STAGE ? (
                           'Cảnh giới tối thượng'
                         ) : (
                           <>
@@ -1859,7 +1892,7 @@ export default function App() {
                     name: 'Đúc pháp khí',
                     symbol: '器',
                     type: 'LUYỆN KHÍ · TRANG BỊ',
-                    description: `Chế tạo một trang bị ngẫu nhiên. Phẩm cơ bản: ${RANKS[Math.min(8, Math.floor(s.stage / 7))].name}. Có 20% cơ hội tăng một phẩm.`,
+                    description: `Chế tạo một trang bị ngẫu nhiên. Phẩm cơ bản: ${RANKS[Math.min(8, Math.floor(stagePower(s.stage) / 7))].name}. Có 20% cơ hội tăng một phẩm.`,
                     material: 'ore' as ItemId,
                     amount: 3,
                     cost: 45,
@@ -2026,6 +2059,7 @@ export default function App() {
           )}
           {view === 'manuals' && <ManualsPanel state={s} act={act} />}
           {view === 'lineage' && <LineagePanel state={s} act={act} />}
+          {view === 'gifts' && <GiftPanel cloud={cloud} onLogin={() => setDialog('account')} />}
           {view === 'titles' && <TitlePanel state={s} act={act} />}
           {view === 'chat' && (
             <ChatPanel state={s} cloud={cloud} onLogin={() => setDialog('account')} />
@@ -2085,7 +2119,7 @@ export default function App() {
             </span>
             <p>Mỗi người một đạo lộ. Mỗi niệm một thế giới.</p>
             <button onClick={() => setDialog(cloud.account ? 'account' : 'settings')}>
-              {cloud.account ? `Bản 1.4 · ${cloud.label}` : 'Bản 1.4 · Lưu cục bộ'}
+              {cloud.account ? `Bản 1.5 · ${cloud.label}` : 'Bản 1.5 · Lưu cục bộ'}
             </button>
           </footer>
         </main>
@@ -2160,7 +2194,7 @@ export default function App() {
       {dialog === 'realms' && (
         <Modal
           title="Hai mươi cảnh giới tu hành"
-          subtitle="Mỗi cảnh giới gồm Sơ kỳ, Trung kỳ và Đỉnh phong. Đột phá luôn thành công khi đủ tu vi, linh khí và thạch tương ứng với cảnh giới."
+          subtitle="Mỗi cảnh giới gồm Sơ kỳ, Trung kỳ, Hậu kỳ và Đỉnh phong. Đột phá luôn thành công khi đủ tu vi, linh khí và thạch tương ứng với cảnh giới."
           onClose={() => setDialog(null)}
           wide
         >
@@ -2177,7 +2211,7 @@ export default function App() {
             </button>
             {REALMS.map((realm, i) => (
               <div
-                className={`${i === Math.floor(s.stage / 3) ? 'current' : ''} ${i < Math.floor(s.stage / 3) ? 'completed' : ''}`}
+                className={`${i === Math.floor(s.stage / PHASE_COUNT) ? 'current' : ''} ${i < Math.floor(s.stage / PHASE_COUNT) ? 'completed' : ''}`}
                 key={realm}
               >
                 <span>{String(i + 1).padStart(2, '0')}</span>
@@ -2189,10 +2223,10 @@ export default function App() {
                   </h3>
                   <p>
                     {STAGES.map((stage, j) => (
-                      <em key={stage} className={s.stage >= i * 3 + j ? 'reached' : ''}>
-                        {s.stage > i * 3 + j ? (
+                      <em key={stage} className={s.stage >= i * PHASE_COUNT + j ? 'reached' : ''}>
+                        {s.stage > i * PHASE_COUNT + j ? (
                           <Check size={11} />
-                        ) : s.stage === i * 3 + j ? (
+                        ) : s.stage === i * PHASE_COUNT + j ? (
                           <span className="status-dot" />
                         ) : (
                           <span className="realm-empty-dot" />
@@ -2202,9 +2236,9 @@ export default function App() {
                     ))}
                   </p>
                 </div>
-                {i === Math.floor(s.stage / 3) ? (
+                {i === Math.floor(s.stage / PHASE_COUNT) ? (
                   <Tag color="green">Hiện tại</Tag>
-                ) : i < Math.floor(s.stage / 3) ? (
+                ) : i < Math.floor(s.stage / PHASE_COUNT) ? (
                   <CircleCheck size={18} />
                 ) : (
                   <LockKeyhole size={15} />
@@ -2336,7 +2370,7 @@ export default function App() {
               {
                 icon: Sparkles,
                 name: 'Củng cố đạo cơ',
-                text: 'Đủ tu vi, linh khí và linh thạch thì đột phá. Mỗi đại cảnh giới gồm Sơ kỳ, Trung kỳ, Đỉnh phong. Mốc Chân Tiên mở Tiên giới; Chân Thần mở Thần giới.',
+                text: 'Đủ tu vi, linh khí và linh thạch thì đột phá. Mỗi đại cảnh giới gồm Sơ kỳ, Trung kỳ, Hậu kỳ, Đỉnh phong. Mốc Chân Tiên mở Tiên giới; Chân Thần mở Thần giới.',
               },
               {
                 icon: Swords,

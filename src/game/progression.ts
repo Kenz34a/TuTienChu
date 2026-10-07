@@ -1,3 +1,4 @@
+import { MAX_STAGE } from './stages';
 import { stoneCost, xpNeeded } from './data';
 import { breakthroughTier, qiCost, tierLabel } from './expansion';
 import type { BreakthroughMethod, GameState } from './types';
@@ -53,7 +54,7 @@ export function breakthroughRequirements(s: GameState, method: BreakthroughMetho
         ]
       : []),
   ].map((r) => ({ ...r, missing: Math.max(0, Math.ceil(r.need - r.have)) }));
-  const maxed = s.stage >= 59;
+  const maxed = s.stage >= MAX_STAGE;
   const missing = resources.filter((r) => r.missing > 0);
   return {
     resources,

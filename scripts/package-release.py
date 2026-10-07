@@ -26,7 +26,7 @@ for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-buil
 for name in ['package.json', 'package-lock.json', 'README.md', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'capacitor.config.ts', 'Dockerfile', '.dockerignore', '.gitignore', '.env.example', '.nvmrc', '.prettierrc.json', '.prettierignore']:
     files.add(Path(name))
 files.add(apk.relative_to(root))
-guide = '''VÂN TIÊN KÝ 1.4 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
+guide = '''VÂN TIÊN KÝ 1.5 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
 
 PC WINDOWS: tải gói riêng van-tien-ky-pc-windows.zip. Giải nén toàn bộ,
 mở VanTienKy-win32-x64/VanTienKy.exe. Dành cho Windows 10/11 64-bit.
@@ -54,13 +54,19 @@ Gói này chưa tự tạo hosting hay tên miền công khai.
 DỮ LIỆU: tự lưu trên thiết bị. Đăng nhập để đồng bộ tài khoản. Máy chủ dùng
 SQLite trong DATA_DIR (mặc định var/). Phải giữ và sao lưu thư mục này.
 Khi hai bản khác nhau, chọn bản trên tài khoản hoặc trên thiết bị; xuất bản
-lưu dự phòng trước khi chọn nếu muốn giữ cả hai. Không có phục hồi mật khẩu
-qua email trong phiên bản này.
+lưu dự phòng trước khi chọn nếu muốn giữ cả hai. Admin có thể đổi mật khẩu; chưa có khôi phục qua email.
 
-BẢN 1.4: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,
+BẢN 1.5: thiền theo phút, linh khí, 27 map, bí kíp, linh căn/truyền thừa,
 ba loại thạch, tự lập tông môn, phó bản, sáng/tối, thông báo và thiên bảng.
 Thêm 50 danh hiệu, cẩm nang 20 cảnh giới, 3 phương thức đột phá và chat.
-Chat/online/boss thế giới cần chạy cùng máy chủ; chưa có push nền.
+Thêm Hậu kỳ: 20 cảnh giới x 4 giai đoạn, 80 bậc; tự chuyển bản lưu cũ v1
+sang v2, giữ đúng tu vi/tài nguyên. Cập nhật tất cả app/web cùng bản 1.5.
+Sao lưu SQLite và xuất bản lưu trước khi cập nhật. Bản 1.4 không đọc được v2.
+Giftcode và trang /admin: tạo tài khoản trong game rồi mở terminal thứ hai
+ở thư mục này, chạy npm run admin -- grant ten_tai_khoan (cùng DATA_DIR).
+Admin quản lý tiền, vật phẩm, nhân vật, tài khoản, giftcode, thông báo,
+bảo trì, boss, chat, nhật ký và khôi phục bản lưu; xem docs/admin.md.
+Chat/online/boss thế giới/giftcode cần cùng máy chủ; chưa có push nền.
 
 Gói không chứa tài khoản thử nghiệm, bản lưu người chơi hay bí mật môi trường.
 '''

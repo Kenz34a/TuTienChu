@@ -71,6 +71,11 @@ export function AccountPanel({ cloud, state }: { cloud: CloudController; state: 
             <strong>{cloud.account.server}</strong>
           </div>
           <div className="account-buttons">
+            {cloud.account.admin && !nativeApp && (
+              <a className="button secondary" href="/admin">
+                Quản trị máy chủ
+              </a>
+            )}
             <button
               className="button primary"
               disabled={cloud.working || Boolean(cloud.conflict)}

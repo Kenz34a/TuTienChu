@@ -177,12 +177,11 @@ export function useCloud(
     setError('');
     try {
       const origin = validateServer(address);
-      const result = await api<{ token: string; user: { username: string }; cloud: CloudSave }>(
-        origin,
-        `/auth/${mode}`,
-        undefined,
-        { username, password },
-      );
+      const result = await api<{
+        token: string;
+        user: { username: string; admin?: boolean };
+        cloud: CloudSave;
+      }>(origin, `/auth/${mode}`, undefined, { username, password });
       const cloud = parseCloud(result.cloud);
       generation.current++;
       retryAt.current = 0;
@@ -201,6 +200,7 @@ export function useCloud(
         server: origin,
         revision: cloud.revision,
         baseline: cloud.state ? null : '',
+        admin: result.user.admin === true,
       });
       if (cloud.state) hold(cloud);
       else setStatus('syncing');
@@ -246,6 +246,49 @@ export function useCloud(
         /* Local sign-out also works offline; sessions expire after 30 days. */
       }
   };
+  const receive = (value: CloudSave, token: string) => {
+    const cloud = parseCloud(value),
+      a = session.current;
+    if (!a || a.token !== token || !cloud.state) return;
+    if (fingerprint(current.current.state) !== a.baseline || pending.current) {
+      hold(cloud);
+      return;
+    }
+    current.current.state = cloud.state;
+    current.current.restore(cloud.state);
+    persist({ ...a, revision: cloud.revision, baseline: fingerprint(cloud.state) });
+    lastPull.current = Date.now();
+    setStatus('synced');
+  };
+  const serverAction = async <T extends { cloud: CloudSave }>(
+    path: string,
+    body: Record<string, unknown>,
+  ): Promise<T> => {
+    if (busy.current) throw new Error('Đang đồng bộ. Hãy đợi rồi thử lại.');
+    await pump(true);
+    const a = session.current;
+    if (
+      !a ||
+      busy.current ||
+      pending.current ||
+      current.current.storageBlocked ||
+      fingerprint(current.current.state) !== a.baseline ||
+      Date.now() < retryAt.current
+    )
+      throw new Error('Chưa đồng bộ xong. Mở Tài khoản & đồng bộ để kiểm tra hoặc chọn bản lưu.');
+    busy.current = true;
+    setWorking(true);
+    try {
+      const result = await api<T>(a.server, path, a.token, { ...body, revision: a.revision });
+      if (session.current?.token !== a.token)
+        throw new Error('Tài khoản đã thay đổi. Phần thưởng lưu trên tài khoản đã nhận.');
+      receive(result.cloud, a.token);
+      return result;
+    } finally {
+      busy.current = false;
+      setWorking(false);
+    }
+  };
   return {
     account,
     server,
@@ -258,19 +301,7 @@ export function useCloud(
     choose,
     logout,
     sync: () => pump(true),
-    receive: (value: CloudSave, token: string) => {
-      const cloud = parseCloud(value),
-        a = session.current;
-      if (!a || a.token !== token || !cloud.state) return;
-      if (fingerprint(current.current.state) !== a.baseline || pending.current) {
-        hold(cloud);
-        return;
-      }
-      current.current.state = cloud.state;
-      current.current.restore(cloud.state);
-      persist({ ...a, revision: cloud.revision, baseline: fingerprint(cloud.state) });
-      lastPull.current = Date.now();
-      setStatus('synced');
-    },
+    receive,
+    serverAction,
   };
 }

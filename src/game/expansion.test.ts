@@ -49,7 +49,7 @@ describe('extended cultivation, content and backward compatibility', () => {
   });
   it('transforms an awakened root through the final ancient legacy without losing its level', () => {
     let s = initialState(now);
-    s.stage = 57;
+    s.stage = 76;
     s.lingqi = 2500;
     s.wallet.divine = 3;
     s.spiritualRoot = { id: 'wood', level: 7 };
@@ -70,7 +70,7 @@ describe('extended cultivation, content and backward compatibility', () => {
     expect(s.stones).toBe(1000);
     expect(s.wallet.immortal).toBe(0);
     expect(act(s, { type: 'exchange-currency', from: 'divine', direction: 'up' }).ok).toBe(false);
-    s.stage = 48;
+    s.stage = 64;
     s.hp = stats(s).maxHp;
     s = perform(s, { type: 'explore', mapId: 'stars' }, () => 0.9, now).state;
     expect(s.wallet.divine).toBeGreaterThan(0);
@@ -155,7 +155,7 @@ describe('extended cultivation, content and backward compatibility', () => {
   });
   it('learns, upgrades and equips at most three manuals with actual combat bonuses', () => {
     let s = initialState(now);
-    s.stage = 20;
+    s.stage = 27;
     s.stones = 100000;
     s.lingqi = 100000;
     const oldAttack = stats(s).attack;
@@ -170,7 +170,7 @@ describe('extended cultivation, content and backward compatibility', () => {
   });
   it('founds a sect, funds upgrades, recruits NPCs and keeps its estate when leaving', () => {
     let s = initialState(now);
-    s.stage = 3;
+    s.stage = 4;
     s.stones = 10000;
     s.inventory.ore = 100;
     s = act(s, { type: 'found-sect', name: 'Thiên Trúc Tông' }).state;
@@ -192,7 +192,7 @@ describe('extended cultivation, content and backward compatibility', () => {
   });
   it('runs three dungeon waves, survives reload, rewards once and applies entry cooldown', () => {
     let s = initialState(now);
-    s.stage = 9;
+    s.stage = 12;
     s.hp = stats(s).maxHp;
     s.inventory.pill = 20;
     s = act(s, { type: 'dungeon', id: 'trial' }).state;
@@ -226,7 +226,7 @@ describe('extended cultivation, content and backward compatibility', () => {
   });
   it('migrates old v1 saves and rejects malformed new progression/battle contexts', () => {
     const old: any = initialState(now);
-    old.stage = 12;
+    old.stage = 16;
     old.stones = 4321;
     for (const key of [
       'lingqi',
@@ -243,7 +243,7 @@ describe('extended cultivation, content and backward compatibility', () => {
     ])
       delete old[key];
     const restored = decodeSave(JSON.stringify(old));
-    expect(restored.stage).toBe(12);
+    expect(restored.stage).toBe(16);
     expect(restored.stones).toBe(4321);
     expect(restored.training.active).toBe(false);
     for (const patch of [

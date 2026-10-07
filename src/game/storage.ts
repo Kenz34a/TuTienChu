@@ -4,6 +4,7 @@ import type { GameState, Gear } from './types';
 import { ALL_ENEMIES, ENEMIES, SECRET_AREAS } from './encounters';
 import { DUNGEONS, MANUALS, SPIRITUAL_ROOTS, INHERITANCES } from './expansion';
 import { TITLES, collectTitles } from './titles';
+import { MAX_STAGE, legacyStage } from './stages';
 
 export const SAVE_KEY = 'van-tien-ky.save.v1';
 const number = (value: unknown, max = 1e12) =>
@@ -30,7 +31,16 @@ export function decodeSave(input: string): GameState {
   const invalid = () => {
     throw new Error('Bản lưu không hợp lệ hoặc không tương thích với phiên bản hiện tại.');
   };
-  if (!record(v) || v.version !== 1) return invalid();
+  if (!record(v) || (v.version !== 1 && v.version !== 2)) return invalid();
+  if (v.version === 1) {
+    if (!integer(v.stage, 59)) return invalid();
+    v.stage = legacyStage(v.stage as number);
+    if (record(v.battle) && v.battle.enemyStage !== undefined) {
+      if (!integer(v.battle.enemyStage, 59)) return invalid();
+      v.battle.enemyStage = legacyStage(v.battle.enemyStage as number);
+    }
+    v.version = 2;
+  }
   if (
     !text(v.name, 24) ||
     !(v.name as string).trim() ||
@@ -39,7 +49,7 @@ export function decodeSave(input: string): GameState {
   )
     return invalid();
   if (
-    !integer(v.stage, 59) ||
+    !integer(v.stage, MAX_STAGE) ||
     !number(v.xp) ||
     !number(v.stones) ||
     !number(v.hp) ||
@@ -316,7 +326,7 @@ export function decodeSave(input: string): GameState {
       !enemy ||
       enemy.mapId !== b.mapId ||
       enemy.kind !== b.kind ||
-      !integer(b.enemyStage, 59) ||
+      !integer(b.enemyStage, MAX_STAGE) ||
       typeof b.enraged !== 'boolean' ||
       (b.kind === 'dungeon'
         ? !dungeon ||

@@ -36,7 +36,7 @@ export interface Battle {
   skillCooldown: number;
 }
 export interface GameState {
-  version: 1;
+  version: 2;
   name: string;
   race: RaceId;
   raceChosen: boolean;

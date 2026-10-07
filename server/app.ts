@@ -7,6 +7,9 @@ import { dirname, resolve } from 'node:path';
 import { decodeSave } from '../src/game/storage';
 import { attachCommunity } from './community';
 import { attachChat } from './chat';
+import { administration } from './admin-core';
+import { attachAdmin } from './admin';
+import { legacyStage } from '../src/game/stages';
 
 const derive = promisify(scrypt);
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -30,6 +33,42 @@ export function createApp(options: {
     CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS saves (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, revision INTEGER NOT NULL DEFAULT 0, game_json TEXT, updated_at INTEGER NOT NULL);
     CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);`);
+  const core = administration(db, now);
+  db.exec('CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)');
+  if (!db.prepare("SELECT 1 FROM metadata WHERE key='four-phase-realms'").get()) {
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const hasProfiles = Boolean(
+        db.prepare("SELECT 1 FROM sqlite_master WHERE name='profiles'").get(),
+      );
+      for (const row of db
+        .prepare('SELECT user_id,game_json FROM saves WHERE game_json IS NOT NULL')
+        .all()) {
+        try {
+          if (JSON.parse(String(row.game_json)).version !== 1) continue;
+          const state = decodeSave(String(row.game_json));
+          db.prepare(
+            'UPDATE saves SET game_json=?,revision=revision+1,updated_at=? WHERE user_id=?',
+          ).run(JSON.stringify(state), now(), String(row.user_id));
+          if (hasProfiles)
+            db.prepare('DELETE FROM profiles WHERE user_id=?').run(String(row.user_id));
+        } catch {
+          /* Preserve invalid legacy data for export/recovery. */
+        }
+      }
+      if (db.prepare("SELECT 1 FROM sqlite_master WHERE name='chat_messages'").get())
+        for (const row of db.prepare('SELECT id,stage FROM chat_messages').all())
+          db.prepare('UPDATE chat_messages SET stage=? WHERE id=?').run(
+            legacyStage(Number(row.stage)),
+            Number(row.id),
+          );
+      db.prepare("INSERT INTO metadata VALUES('four-phase-realms','2')").run();
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+  }
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -102,7 +141,11 @@ export function createApp(options: {
       now() + SESSION_DURATION,
     );
     presence.set(digest(token), { userId, seenAt: now() });
-    return { token, user: { id: userId, username }, cloud: cloudSave(userId) };
+    return {
+      token,
+      user: { id: userId, username, admin: core.isAdmin(userId) },
+      cloud: cloudSave(userId),
+    };
   };
   const authenticate: express.RequestHandler = (req, res, next) => {
     const match = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(req.get('authorization') || '');
@@ -119,12 +162,51 @@ export function createApp(options: {
         message: 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.',
       });
     res.locals.user = row;
+    const blocked = core.ban((row as { id: string }).id);
+    if (blocked?.banned)
+      return res
+        .status(403)
+        .json({ error: 'ACCOUNT_BANNED', message: `Tài khoản đã bị khóa. ${blocked.reason}` });
+    res.locals.user.admin = core.isAdmin((row as { id: string }).id);
     res.locals.tokenHash = digest(match![1]);
     presence.set(res.locals.tokenHash, { userId: (row as { id: string }).id, seenAt: now() });
     next();
   };
+  app.use('/api', (req, res, next) => {
+    if (
+      !core.status().maintenance ||
+      ['GET', 'OPTIONS'].includes(req.method) ||
+      req.path.startsWith('/admin/') ||
+      req.path.startsWith('/auth/') ||
+      req.path === '/logout'
+    )
+      return next();
+    authenticate(req, res, () =>
+      core.isAdmin(res.locals.user.id)
+        ? next()
+        : res
+            .status(503)
+            .json({
+              error: 'MAINTENANCE',
+              message:
+                core.status().message ||
+                'Máy chủ đang bảo trì. Tiến trình vẫn được giữ trên thiết bị.',
+            }),
+    );
+  });
   const community = attachCommunity(app, db, now, authenticate, presence);
   attachChat(app, db, now, authenticate);
+  attachAdmin(
+    app,
+    db,
+    now,
+    authenticate,
+    core,
+    community.updateProfile,
+    { list: community.listBosses, control: community.controlBoss },
+    throttle,
+    presence,
+  );
   app.get('/api/health', (_req, res) =>
     res.json({
       service: 'van-tien-ky',
@@ -200,6 +282,11 @@ export function createApp(options: {
         return res
           .status(401)
           .json({ error: 'LOGIN_FAILED', message: 'Tên tài khoản hoặc mật khẩu không đúng.' });
+      const blocked = core.ban(existing.id);
+      if (blocked?.banned)
+        return res
+          .status(403)
+          .json({ error: 'ACCOUNT_BANNED', message: `Tài khoản đã bị khóa. ${blocked.reason}` });
       return res.json(session(existing.id, existing.username));
     } catch {
       return res

@@ -20,10 +20,10 @@ function fight(s: GameState) {
 }
 
 describe('Cultivation and recovery', () => {
-  it('has 20 realms, exactly 3 stages each', () => {
+  it('has 20 realms, exactly 4 stages each', () => {
     expect(REALMS).toHaveLength(20);
     expect(realmName(0)).toBe('Luyện Khí Sơ kỳ');
-    expect(realmName(59)).toBe('Thần Đế Đỉnh phong');
+    expect(realmName(79)).toBe('Thần Đế Đỉnh phong');
   });
   it('meditation starts without instant gains, awards a completed minute, and rejects repeated clicks', () => {
     const original = start();
@@ -57,9 +57,9 @@ describe('Cultivation and recovery', () => {
     s.stones = 0;
     expect(run(s, { type: 'breakthrough' }).ok).toBe(false);
   });
-  it('progresses through all 59 breakthroughs and stops at the final stage', () => {
+  it('progresses through all 79 breakthroughs and stops at the final stage', () => {
     let s = start();
-    for (let stage = 0; stage < 59; stage++) {
+    for (let stage = 0; stage < 79; stage++) {
       s.xp = xpNeeded(stage);
       s.stones = stoneCost(stage);
       s.lingqi = qiCost(stage);
@@ -73,7 +73,7 @@ describe('Cultivation and recovery', () => {
       expect(s.hp).toBe(stats(s).maxHp);
     }
     expect(run(s, { type: 'breakthrough' }).ok).toBe(false);
-    expect(s.metrics.breakthroughs).toBe(59);
+    expect(s.metrics.breakthroughs).toBe(79);
   });
   it('rest requires money and restores finite stamina and HP', () => {
     const s = start();
@@ -114,7 +114,7 @@ describe('Exploration and battle', () => {
     for (const map of MAPS.filter((m) => m.minStage > 0))
       expect(run(start(), { type: 'explore', mapId: map.id }).ok).toBe(false);
     const s = start();
-    s.stage = 27;
+    s.stage = 36;
     s.hp = stats(s).maxHp;
     expect(run(s, { type: 'explore', mapId: 'gate' }).ok).toBe(true);
     expect(run(s, { type: 'explore', mapId: 'stars' }).ok).toBe(false);
@@ -237,7 +237,7 @@ describe('Gear, economy, race, and sect', () => {
   });
   it('forges level-appropriate random equipment with unique IDs', () => {
     const s = start();
-    s.stage = 30;
+    s.stage = 40;
     const next = run(s, { type: 'craft', recipe: 'gear' }, 0.1).state;
     expect(next.bag.at(-1)!.rank).toBe(5);
     expect(next.bag.at(-1)!.uid).toBe('g4');
@@ -339,7 +339,7 @@ describe('Quests, NPCs, and save validation', () => {
     expect(decodeSave(JSON.stringify(s)).battle).toEqual(s.battle);
   });
   it.each([
-    { stage: 60 },
+    { stage: 80 },
     { stage: -1 },
     { xp: -3 },
     { race: 'unknown' },

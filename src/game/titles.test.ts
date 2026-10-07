@@ -15,26 +15,26 @@ describe('Kim Dan progression and title system', () => {
     expect(REALM_METHODS).toHaveLength(20);
     expect(new Set(REALM_METHODS.map((m) => m.name)).size).toBe(20);
     const s = initialState(now);
-    s.stage = 6;
-    s.xp = xpNeeded(6);
+    s.stage = 8;
+    s.xp = xpNeeded(8);
     s.inventory.elixir = 1;
-    s.lingqi = Math.ceil(qiCost(6) * 0.8);
-    s.stones = stoneCost(6);
+    s.lingqi = Math.ceil(qiCost(8) * 0.8);
+    s.stones = stoneCost(8);
     const pill = perform(s, { type: 'breakthrough', method: 'pill' }, Math.random, now);
     expect(pill.ok).toBe(true);
     expect(pill.state.inventory.elixir).toBe(0);
     expect(pill.state.lingqi).toBe(0);
     s.inventory.elixir = 0;
     expect(perform(s, { type: 'breakthrough', method: 'pill' }, Math.random, now).ok).toBe(false);
-    s.lingqi = qiCost(6);
-    s.stones = Math.ceil(stoneCost(6) * 0.8);
+    s.lingqi = qiCost(8);
+    s.stones = Math.ceil(stoneCost(8) * 0.8);
     s.inventory.essence = 1;
     const array = perform(s, { type: 'breakthrough', method: 'array' }, Math.random, now);
     expect(array.ok).toBe(true);
     expect(array.state.inventory.essence).toBe(0);
     expect(array.state.stones).toBe(0);
   });
-  it.each([6, 7, 8])(
+  it.each([8, 9, 10, 11])(
     'can meditate and break through Kim Dan stage %i without immortal/divine stones',
     (stage) => {
       let s = initialState(now);
@@ -60,16 +60,16 @@ describe('Kim Dan progression and title system', () => {
   );
   it('reports every missing resource and includes spirit stones in readiness', () => {
     const s = initialState(now);
-    s.stage = 6;
-    s.xp = xpNeeded(6);
-    s.lingqi = qiCost(6);
-    s.stones = stoneCost(6) - 7;
+    s.stage = 8;
+    s.xp = xpNeeded(8);
+    s.lingqi = qiCost(8);
+    s.stones = stoneCost(8) - 7;
     expect(breakthroughRequirements(s).ready).toBe(false);
     expect(breakthroughRequirements(s).message).toContain('7 linh thạch');
-    s.stage = 27;
-    s.xp = xpNeeded(27);
-    s.stones = stoneCost(27);
-    s.lingqi = qiCost(27);
+    s.stage = 36;
+    s.xp = xpNeeded(36);
+    s.stones = stoneCost(36);
+    s.lingqi = qiCost(36);
     expect(breakthroughRequirements(s).message).toContain('3 tiên thạch');
   });
   it('has exactly fifty unique titles covering all five rarities and six visual effects', () => {
@@ -95,7 +95,7 @@ describe('Kim Dan progression and title system', () => {
   it('applies only the equipped bonus and disabling effects preserves its actual power', () => {
     let s = initialState(now);
     s.metrics.kills = 500;
-    s.stage = 6;
+    s.stage = 8;
     collectTitles(s);
     const base = stats(s);
     const oldXp = s.xp;
@@ -123,13 +123,13 @@ describe('Kim Dan progression and title system', () => {
   });
   it('migrates an older Kim Dan save without resetting progression or equipping a free bonus', () => {
     const s = initialState(now);
-    s.stage = 8;
-    s.xp = xpNeeded(8);
+    s.stage = 11;
+    s.xp = xpNeeded(11);
     s.stones = 4321;
     const legacy = JSON.parse(JSON.stringify(s));
     delete legacy.titles;
     const restored = decodeSave(JSON.stringify(legacy));
-    expect(restored.stage).toBe(8);
+    expect(restored.stage).toBe(11);
     expect(restored.xp).toBe(s.xp);
     expect(restored.stones).toBe(4321);
     expect(restored.titles.owned).toEqual(['realm-foundation', 'realm-golden']);
@@ -144,7 +144,7 @@ describe('Kim Dan progression and title system', () => {
   });
   it('all fifty conditions can be reached and simultaneous unlock logs remain valid saves', () => {
     let s = initialState(now);
-    s.stage = 59;
+    s.stage = 79;
     s.metrics.kills = 500;
     s.metrics.explorations = 50;
     s.metrics.crafts = 50;

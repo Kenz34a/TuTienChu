@@ -34,7 +34,7 @@ test('discover, enter and defeat the hidden boss through actual combat actions',
   await page.goto('/');
   await page.evaluate((key) => {
     const save = JSON.parse(localStorage.getItem(key)!);
-    save.stage = 9;
+    save.stage = 12;
     save.hp = 100000;
     save.inventory.key = 1;
     save.inventory.pill = 8;
@@ -216,7 +216,7 @@ test('responsive layout, navigation, and destructive action confirmation', async
 test('export, invalid import protection, and valid import work on the device', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Tĩnh tâm tu luyện/ }).click();
-  await page.getByRole('button', { name: 'Bản 1.4 · Lưu cục bộ' }).click();
+  await page.getByRole('button', { name: 'Bản 1.5 · Lưu cục bộ' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Xuất bản lưu/ }).click();
   const download = await downloadPromise;
@@ -236,7 +236,7 @@ test('export, invalid import protection, and valid import work on the device', a
     ),
   ).toBe(0);
   saved.name = 'Mộng Vân';
-  saved.stage = 2;
+  saved.stage = 3;
   await page.locator('input[type=file]').setInputFiles({
     name: 'progress.json',
     mimeType: 'application/json',
@@ -247,7 +247,7 @@ test('export, invalid import protection, and valid import work on the device', a
   await page.reload();
   const restored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), SAVE_KEY);
   expect(restored.name).toBe('Mộng Vân');
-  expect(restored.stage).toBe(2);
+  expect(restored.stage).toBe(3);
 });
 
 test('every screen stays within the viewport and race bonuses update', async ({ page }) => {
@@ -267,6 +267,7 @@ test('every screen stays within the viewport and race bonuses update', async ({ 
     'Chat thế giới',
     'Tu luyện & đột phá',
     'Linh căn & truyền thừa',
+    'Quà tặng & giftcode',
   ]) {
     if (await page.getByRole('button', { name: 'Mở menu' }).isVisible())
       await page.getByRole('button', { name: 'Mở menu' }).click();
