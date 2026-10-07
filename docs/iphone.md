@@ -1,8 +1,10 @@
 # Chơi Vân Tiên Ký trên iPhone và iPad
 
-Game có dự án **app iOS riêng** tại `ios/`, hỗ trợ **iOS/iPadOS 15 trở lên**, đóng gói sẵn game để chơi ngoại tuyến. Đăng nhập cùng tài khoản và địa chỉ máy chủ để đồng bộ với web, Windows và Android. Xuất bản lưu mở bảng chia sẻ của iOS; chọn **Lưu vào Tệp** để giữ JSON.
+Game có dự án **app iOS riêng** tại `ios/`, hỗ trợ **iOS/iPadOS 17.2 trở lên**, đóng gói sẵn game để chơi ngoại tuyến. Đăng nhập cùng tài khoản và địa chỉ máy chủ để đồng bộ với web, Windows và Android. Xuất bản lưu mở bảng chia sẻ của iOS; chọn **Lưu vào Tệp** để giữ JSON.
 
 ## Dùng miễn phí khi chỉ có laptop Windows
+
+Dùng Safari trên iOS/iPadOS **17.2 trở lên** để các API lưu và đồng bộ hoạt động đầy đủ.
 
 1. Triển khai website HTTPS theo [hướng dẫn Render + Neon](deploy-render-neon.md).
 2. Trên iPhone mở website bằng **Safari**, đợi game tải xong một lần khi có mạng.
@@ -15,7 +17,7 @@ Render Free có thể ngủ; lần đầu mở website chờ khoảng một phú
 
 ## Cài thử app iOS riêng bằng Mac
 
-Cần **Mac chạy Xcode 26+**, Node.js 24, Apple Account và iPhone/iPad iOS 15+. Có thể dùng **Personal Team miễn phí** để cài thử trên thiết bị của bạn; bản ký miễn phí thường cần ký/cài lại sau **7 ngày**. Không cần đưa tài khoản Apple hay mật khẩu vào repo hoặc gửi trong chat.
+Cần **Mac chạy Xcode 26+**, Node.js 24, Apple Account và iPhone/iPad iOS 17.2+. Có thể dùng **Personal Team miễn phí** để cài thử trên thiết bị của bạn; bản ký miễn phí thường cần ký/cài lại sau **7 ngày**. Không cần đưa tài khoản Apple hay mật khẩu vào repo hoặc gửi trong chat.
 
 ```bash
 git clone https://github.com/Kenz34a/TuTienChu.git

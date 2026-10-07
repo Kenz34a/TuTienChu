@@ -27,7 +27,7 @@ Render Free ngủ sau 15 phút không truy cập, lần mở tiếp theo có th�
 
 Miễn phí: mở website game HTTPS bằng **Safari → Chia sẻ → Thêm vào màn hình chính**. Mở icon Vân Tiên Ký và đăng nhập cùng tài khoản để đồng bộ Windows/Android/iOS/web. Lần đầu cần mạng để tải tài nguyên; sau đó có thể chơi ngoại tuyến.
 
-App iOS riêng nằm trong `ios/`, hỗ trợ **iOS/iPadOS 15+**, có game đóng gói sẵn và chia sẻ JSON vào Tệp. Trên **Mac với Xcode 26+**, chạy `npm ci`, `npm run ios:sync`, `npm run ios:open`, chọn team ký và Run lên iPhone. Apple Personal Team cho cài thử miễn phí nhưng thường hết hạn sau 7 ngày. Phân phối TestFlight/App Store cần Apple Developer có phí; **chưa có IPA đã ký hay link TestFlight/App Store**. Workflow iOS tạo bản Simulator và archive chưa ký, không thể bấm cài archive đó trên iPhone.
+App iOS riêng nằm trong `ios/`, hỗ trợ **iOS/iPadOS 17.2+**, có game đóng gói sẵn và chia sẻ JSON vào Tệp. Trên **Mac với Xcode 26+**, chạy `npm ci`, `npm run ios:sync`, `npm run ios:open`, chọn team ký và Run lên iPhone. Apple Personal Team cho cài thử miễn phí nhưng thường hết hạn sau 7 ngày. Phân phối TestFlight/App Store cần Apple Developer có phí; **chưa có IPA đã ký hay link TestFlight/App Store**. Workflow iOS tạo bản Simulator và archive chưa ký, không thể bấm cài archive đó trên iPhone.
 
 ## Chạy web và máy chủ đồng bộ
 
