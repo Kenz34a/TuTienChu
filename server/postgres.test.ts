@@ -11,6 +11,9 @@ describe('PostgreSQL database configuration', () => {
     expect(
       postgresOptions('postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require').ssl,
     ).toEqual({ rejectUnauthorized: true });
+    expect(() => postgresOptions('postgresql://user:fixture-secret@[invalid/db')).toThrow(
+      'DATABASE_URL must be a valid PostgreSQL connection string.',
+    );
     expect(postgresOptions('postgresql://agent@127.0.0.1/postgres?sslmode=disable').ssl).toBe(
       false,
     );

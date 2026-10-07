@@ -30,7 +30,13 @@ export function postgresSQL(input) {
 }
 
 export function postgresOptions(connectionString, schema) {
-  const url = new URL(connectionString);
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    // URL's native TypeError contains its input, which can include a password.
+    throw new Error('DATABASE_URL must be a valid PostgreSQL connection string.');
+  }
   if (!['postgres:', 'postgresql:'].includes(url.protocol))
     throw new Error('DATABASE_URL must use PostgreSQL.');
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
