@@ -9,3 +9,5 @@ server-build
 android
 var
 desktop/*.ico
+
+ios

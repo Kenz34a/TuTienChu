@@ -13,7 +13,7 @@ with zipfile.ZipFile(apk) as archive:
         if file.is_file():
             assert archive.read('assets/public/' + file.relative_to(root / 'dist').as_posix()) == file.read_bytes(), f'Stale APK asset: {file}'
 files = set()
-for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-build', 'android', 'desktop', 'docs']:
+for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-build', 'android', 'ios', 'desktop', 'docs']:
     for file in (root / name).rglob('*'):
         if not file.is_file() or "__pycache__" in file.parts:
             continue
@@ -22,11 +22,13 @@ for name in ['src', 'server', 'scripts', 'public', 'tests', 'dist', 'server-buil
             continue
         if name == 'android' and (set(path.parts) & {'build', '.gradle', 'capacitor-cordova-android-plugins'} or 'assets' in path.parts or path.name == 'local.properties'):
             continue
+        if name == 'ios' and (set(path.parts) & {'build', 'DerivedData', 'SourcePackages', 'xcuserdata', 'Pods', 'public'} or path.name in {'capacitor.config.json', 'config.xml'}):
+            continue
         files.add(path)
-for name in ['package.json', 'package-lock.json', 'README.md', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'capacitor.config.ts', 'Dockerfile', '.dockerignore', '.gitignore', '.env.example', '.nvmrc', '.prettierrc.json', '.prettierignore']:
+for name in ['package.json', 'package-lock.json', 'README.md', 'index.html', 'tsconfig.json', 'vite.config.ts', 'playwright.config.ts', 'capacitor.config.ts', 'Dockerfile', '.dockerignore', '.gitignore', '.env.example', '.nvmrc', '.prettierrc.json', '.prettierignore', 'render.yaml']:
     files.add(Path(name))
 files.add(apk.relative_to(root))
-guide = '''VÂN TIÊN KÝ 1.5 — WEB + APP PC/ANDROID + MÁY CHỦ ĐỒNG BỘ
+guide = '''VÂN TIÊN KÝ 1.5 — WEB + APP PC/ANDROID/iOS + MÁY CHỦ ĐỒNG BỘ
 
 PC WINDOWS: tải gói riêng van-tien-ky-pc-windows.zip. Giải nén toàn bộ,
 mở VanTienKy-win32-x64/VanTienKy.exe. Dành cho Windows 10/11 64-bit.
@@ -40,6 +42,12 @@ Nếu không thể cập nhật do khác chữ ký, xuất bản lưu/đồng b�
 App có sẵn game, chơi được ngoại tuyến. Để đồng bộ: mở Tài khoản & đồng bộ,
 nhập địa chỉ HTTPS của website game rồi dùng cùng tài khoản trên web/app.
 Chưa thử cài trên thiết bị Android thật; APK đã build và xác minh chữ ký.
+
+iPHONE/iPAD: mở website HTTPS bằng Safari, Chia sẻ -> Thêm vào màn hình chính
+để dùng bản web cài miễn phí. App iOS riêng có mã Xcode trong ios/; cần Mac
+và Xcode 26+ để ký/cài. Personal Team miễn phí thường hết hạn sau 7 ngày;
+TestFlight/App Store cần Apple Developer có phí. Gói này không có IPA đã ký.
+Đọc docs/iphone.md để cài thử và dùng cùng tài khoản trên mọi thiết bị.
 
 WEB: không mở index.html bằng cách nhấp trực tiếp vào tệp trong ZIP.
 Cài Node.js 24, giải nén, mở terminal tại thư mục chứa package.json và chạy:

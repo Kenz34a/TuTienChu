@@ -1,6 +1,6 @@
 # Vân Tiên Ký
 
-Game tu tiên chữ tiếng Việt, có **web, app PC Windows và app Android (APK) riêng**. PC dùng Electron, Android dùng Capacitor; cả hai đóng gói giao diện và cơ chế game, chơi được ngoại tuyến ngay sau khi cài. Đăng nhập cùng tài khoản để đồng bộ nhân vật, trang bị, ba lô, nhiệm vụ và trận chiến giữa PC, Android và web.
+Game tu tiên chữ tiếng Việt, có **web, app PC Windows, app Android (APK) và dự án app iPhone/iPad riêng**. PC dùng Electron, Android/iOS dùng Capacitor; các app đóng gói giao diện và cơ chế game, chơi được ngoại tuyến ngay sau khi cài. Đăng nhập cùng tài khoản để đồng bộ nhân vật, trang bị, ba lô, nhiệm vụ và trận chiến giữa PC, Android, iPhone/iPad và web.
 
 ## Tải bản 1.5.0
 
@@ -20,6 +20,14 @@ Mã nguồn nằm trong kho Git; các tệp app nằm trong **Releases**, không
 Tạo tài khoản **Neon Free**, lấy chuỗi kết nối PostgreSQL riêng, rồi tạo **Render Free** từ nhánh `main` bằng cấu hình `render.yaml`. Điền `DATABASE_URL`, `BOOTSTRAP_ADMIN_USERNAME` và `BOOTSTRAP_ADMIN_PASSWORD` trong Render; admin được tạo riêng trước khi website mở. Đăng nhập `/admin`, sau đó xóa cả hai biến bootstrap khỏi Render. Dữ liệu nằm ở Neon, giữ qua khởi động lại; thiếu `DATABASE_URL` thì cấu hình Render dừng thay vì dùng SQLite.
 
 Render Free ngủ sau 15 phút không truy cập, lần mở tiếp theo có thể chờ khoảng một phút. Trong app Windows/Android 1.5.0, nhập URL HTTPS Render trong **Tài khoản & đồng bộ**. Không dùng gói web-server ZIP 1.5.0 cũ cho Neon: triển khai mã hiện tại từ GitHub. Hướng dẫn có cách nhập dữ liệu SQLite cũ nếu cần giữ toàn bộ tài khoản.
+
+## Chơi trên iPhone/iPad
+
+[**Hướng dẫn iPhone đầy đủ**](docs/iphone.md) · [**Build iOS trên GitHub**](https://github.com/Kenz34a/TuTienChu/actions/workflows/ios.yml)
+
+Miễn phí: mở website game HTTPS bằng **Safari → Chia sẻ → Thêm vào màn hình chính**. Mở icon Vân Tiên Ký và đăng nhập cùng tài khoản để đồng bộ Windows/Android/iOS/web. Lần đầu cần mạng để tải tài nguyên; sau đó có thể chơi ngoại tuyến.
+
+App iOS riêng nằm trong `ios/`, hỗ trợ **iOS/iPadOS 15+**, có game đóng gói sẵn và chia sẻ JSON vào Tệp. Trên **Mac với Xcode 26+**, chạy `npm ci`, `npm run ios:sync`, `npm run ios:open`, chọn team ký và Run lên iPhone. Apple Personal Team cho cài thử miễn phí nhưng thường hết hạn sau 7 ngày. Phân phối TestFlight/App Store cần Apple Developer có phí; **chưa có IPA đã ký hay link TestFlight/App Store**. Workflow iOS tạo bản Simulator và archive chưa ký, không thể bấm cài archive đó trên iPhone.
 
 ## Chạy web và máy chủ đồng bộ
 
@@ -94,7 +102,7 @@ Repo có gói triển khai và APK nhưng **chưa được triển khai lên m�
 
 Tệp **`release/van-tien-ky-pc-windows.zip`** dành cho **Windows 10/11 64-bit**. Giải nén **toàn bộ gói**, mở thư mục `VanTienKy-win32-x64` rồi chạy **`VanTienKy.exe`**. Không chạy trực tiếp EXE trong ZIP và không tách EXE khỏi các DLL/thư mục đi kèm. Không cần cài Node.js, chạy máy chủ hoặc mở trình duyệt để chơi ngoại tuyến.
 
-Bản PC dùng cùng game và hệ thống tài khoản với Android/web. Trong **Tài khoản & đồng bộ**, nhập URL HTTPS của website game và đăng nhập cùng tài khoản. Tiến trình cục bộ ở dữ liệu người dùng ứng dụng (`%APPDATA%/VanTienKy` trên Windows); đóng/mở app vẫn giữ tiến độ. Xuất bản lưu mở hộp thoại lưu JSON của Windows. Chưa có cơ chế tự cập nhật hoặc chứng thư ký Windows trong bản thử nghiệm này.
+Bản PC dùng cùng game và hệ thống tài khoản với Android/iOS/web. Trong **Tài khoản & đồng bộ**, nhập URL HTTPS của website game và đăng nhập cùng tài khoản. Tiến trình cục bộ ở dữ liệu người dùng ứng dụng (`%APPDATA%/VanTienKy` trên Windows); đóng/mở app vẫn giữ tiến độ. Xuất bản lưu mở hộp thoại lưu JSON của Windows. Chưa có cơ chế tự cập nhật hoặc chứng thư ký Windows trong bản thử nghiệm này.
 
 Để build gói Windows từ môi trường Linux này (Node.js 24.5+ và Python 3):
 
@@ -174,6 +182,7 @@ src/cloud/         API client, đồng bộ, giao diện tài khoản và xử l
 src/App.tsx        Các màn hình, hội thoại, chiến đấu
 server/            Express, tài khoản scrypt, phiên đăng nhập, SQLite/PostgreSQL, API lưu
 android/           Dự án Android riêng, Capacitor, icon và splash
+ios/               Dự án iPhone/iPad Xcode, Swift Package Manager, privacy manifest
 desktop/           App PC Electron, giao thức nội bộ, preload và xuất bản lưu
 scripts/           Build web/offline, backend, APK và PC
 tests/             E2E game, ngoại tuyến và đồng bộ giữa hai thiết bị

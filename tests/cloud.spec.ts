@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { offlineOrigin } from './offline-origin';
 const password = 'cloud-test-password-123';
 async function openAccount(page: Page) {
   await page.getByRole('button', { name: 'Tài khoản & đồng bộ', exact: true }).click();
@@ -31,10 +32,13 @@ async function meditation(page: Page) {
 test('shares a character across devices and safely resolves offline changes', async ({
   page,
   browser,
+  browserName,
 }) => {
   test.setTimeout(90000);
   const username = `cloud_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-  await page.goto('/');
+  const outage = browserName === 'webkit' ? await offlineOrigin() : undefined;
+  const origin = outage?.base || 'http://127.0.0.1:4173';
+  await page.goto(origin);
   await page.clock.install();
   await meditation(page);
   await signin(page, username, true);
@@ -58,7 +62,7 @@ test('shares a character across devices and safely resolves offline changes', as
   );
   const second = await secondContext.newPage();
   try {
-    await second.goto('http://127.0.0.1:4173');
+    await second.goto(origin);
     await second.clock.install();
     await signin(second, username);
     await expect(second.getByRole('heading', { name: 'Chọn đạo lộ muốn tiếp tục' })).toBeVisible();
@@ -74,9 +78,21 @@ test('shares a character across devices and safely resolves offline changes', as
       .toBe(saved.metrics.meditations);
     await closeAccount(page);
     await closeAccount(second);
+    await second.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller)
+        await new Promise<void>((resolve) =>
+          navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+            once: true,
+          }),
+        );
+    });
     apiOffline = true;
     await second.evaluate(() => localStorage.setItem('test-api-offline', 'true'));
-    await secondContext.setOffline(true);
+    if (outage) {
+      await outage.pause();
+      await expect(fetch(origin + '/api/health')).rejects.toThrow();
+    } else await secondContext.setOffline(true);
     await meditation(second);
     await second.evaluate(async () => {
       await navigator.serviceWorker.ready;
@@ -85,13 +101,14 @@ test('shares a character across devices and safely resolves offline changes', as
     await expect
       .poll(async () => (await state(second)).metrics.meditations)
       .toBe(saved.metrics.meditations + 1);
+    if (outage) await outage.resume();
     await meditation(page);
     await openAccount(page);
     await page.getByRole('button', { name: 'Đồng bộ ngay', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Đã đồng bộ' })).toBeVisible();
     apiOffline = false;
     await second.evaluate(() => localStorage.removeItem('test-api-offline'));
-    await secondContext.setOffline(false);
+    if (!outage) await secondContext.setOffline(false);
     await openAccount(second);
     await expect(second.getByRole('heading', { name: 'Chọn đạo lộ muốn tiếp tục' })).toBeVisible({
       timeout: 20000,
@@ -112,5 +129,6 @@ test('shares a character across devices and safely resolves offline changes', as
     expect((await state(second)).metrics.meditations).toBe(saved.metrics.meditations + 1);
   } finally {
     await secondContext.close();
+    await outage?.close();
   }
 });

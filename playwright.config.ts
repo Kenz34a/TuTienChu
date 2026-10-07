@@ -11,14 +11,27 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
-    launchOptions: { executablePath },
   },
   projects: [
     {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
+      testIgnore: '**/iphone.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 1000 },
+        launchOptions: { executablePath },
+      },
     },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    {
+      name: 'mobile',
+      testIgnore: '**/iphone.spec.ts',
+      use: { ...devices['Pixel 7'], launchOptions: { executablePath } },
+    },
+    {
+      name: 'iphone',
+      testMatch: ['**/iphone.spec.ts', '**/cloud.spec.ts'],
+      use: { ...devices['iPhone 13'], browserName: 'webkit' },
+    },
   ],
   webServer: [
     {
