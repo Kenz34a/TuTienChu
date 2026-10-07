@@ -41,3 +41,37 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:e2e -- --workers=2
+      - name: Build production Docker image without local release packages
+        run: docker build -t van-tien-ky:ci .
+      - name: Check Docker web, PostgreSQL and download redirects
+        run: |
+          docker run --detach --name van-tien-docker-ci --network host \
+            -e PORT=3189 -e DATABASE_URL="$TEST_DATABASE_URL" \
+            -e REQUIRE_POSTGRES=1 -e APP_RELEASE_TAG=v1.5.0 van-tien-ky:ci
+          trap 'docker logs van-tien-docker-ci; docker rm --force van-tien-docker-ci' EXIT
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base='http://127.0.0.1:3189';
+          let ready=false;
+          for(let attempt=0;attempt<60;attempt++) {
+            try {
+              const response=await fetch(base+'/api/health',{signal:AbortSignal.timeout(1000)});
+              const health=await response.json();
+              if(response.ok && health.ready && health.storage==='postgres') { ready=true; break; }
+            } catch {}
+            await new Promise(resolve=>setTimeout(resolve,500));
+          }
+          assert(ready,'Production container must become ready using PostgreSQL');
+          const page=await fetch(base);
+          assert.equal(page.status,200);
+          const html=await page.text();
+          const script=/src="([^"]+\.js)"/.exec(html)?.[1];
+          assert(script,'Production page must reference a built JavaScript asset');
+          assert.equal((await fetch(new URL(script,base))).status,200);
+          for(const file of ['van-tien-ky-android.apk','van-tien-ky-pc-windows.zip']) {
+            const download=await fetch(base+'/downloads/'+file,{redirect:'manual'});
+            assert.equal(download.status,302);
+            assert.equal(download.headers.get('location'),'https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/'+file);
+          }
+          console.log('Production Docker web, PostgreSQL and app download checks passed');
+          JS

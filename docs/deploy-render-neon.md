@@ -29,6 +29,14 @@ Nếu tài khoản Render không cho tạo Blueprint Free, chọn **New → Web 
 
 Không cần tự đặt `PORT`; máy chủ đọc cổng Render cấp. Không cần `DATA_DIR` hay `CORS_ORIGINS` nếu phục vụ web và API cùng website. `REQUIRE_POSTGRES=1` giúp dừng deploy khi thiếu cấu hình Neon, tránh vô tình dùng SQLite dễ mất dữ liệu.
 
+### Nếu đã tạo dịch vụ với runtime Docker
+
+Bạn có thể giữ dịch vụ Docker hiện tại, vẫn dùng gói **Free** và Neon. Dockerfile build web/API từ mã nguồn; không cần APK, app Windows hay thư mục `release/` có sẵn trong GitHub. Thư mục này được tạo khi build. Đặt `APP_RELEASE_TAG=v1.5.0` để các nút tải Android/Windows chuyển tới GitHub Releases.
+
+Trong **Environment**, đặt `DATABASE_URL` của Neon, `REQUIRE_POSTGRES=1`, `APP_RELEASE_TAG=v1.5.0` và cặp `BOOTSTRAP_ADMIN_USERNAME`/`BOOTSTRAP_ADMIN_PASSWORD` cho lần khởi tạo đầu tiên như bảng trên. Không chọn ổ đĩa trả phí hay dùng SQLite trên Render Free. Đặt **Health Check Path** là `/api/health`. Node.js đã có trong image nên không cần Build/Start Command của runtime Node.
+
+Nếu log báo `COPY /app/release ... not found`, hãy chọn **Manual Deploy → Deploy latest commit** sau khi repo có bản sửa Dockerfile. Nếu lần triển khai tiếp theo lỗi ở kết nối cơ sở dữ liệu hoặc bootstrap, xem log mới và kiểm tra các biến tương ứng; lỗi thư mục `release/` xảy ra trước khi kết nối Neon.
+
 ## 3. Đăng nhập admin và chơi
 
 Mở `https://ten-dich-vu.onrender.com/admin`, đăng nhập bằng tên và mật khẩu bootstrap vừa đặt. Tài khoản này đã được tạo trước khi website nhận kết nối công khai; không cần đăng ký lại trong game. Render Free không có terminal, nên không cần chạy lệnh cấp quyền tại Render.

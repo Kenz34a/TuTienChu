@@ -8,7 +8,8 @@ RUN --mount=type=secret,id=proxy_ca,target=/run/secrets/proxy_ca,required=false 
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
     npm ci --no-audit --no-fund
 COPY . .
-RUN npm run build:all
+# Native downloads are optional and are not tracked in a fresh Git checkout.
+RUN npm run build:all && mkdir -p release
 
 FROM node:24-bookworm-slim
 ENV NODE_ENV=production PORT=3000 DATA_DIR=/data
