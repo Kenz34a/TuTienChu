@@ -65,6 +65,27 @@ async function fixture(
   return { request, register, close, base };
 }
 describe('shared web and Android accounts', () => {
+  it('authenticates and synchronizes iOS WebView requests from capacitor://localhost', async () => {
+    const f = await fixture(),
+      origin = 'capacitor://localhost';
+    const account = await f.request(
+      '/api/auth/register',
+      undefined,
+      { username: 'iphone_player', password: 'iphone-test-password-123' },
+      'POST',
+      origin,
+    );
+    expect(account.status).toBe(201);
+    expect(account.headers.get('access-control-allow-origin')).toBe(origin);
+    const state = { ...initialState(), name: 'Kiếm Tiên iPhone', stones: 321 };
+    expect(
+      (await f.request('/api/save', account.data.token, { revision: 0, state }, 'PUT', origin))
+        .status,
+    ).toBe(200);
+    expect(
+      (await f.request('/api/save', account.data.token, undefined, 'GET', origin)).data.state,
+    ).toMatchObject({ name: 'Kiếm Tiên iPhone', stones: 321 });
+  });
   it('serves app downloads through the configured trusted release when hosting has no local packages', async () => {
     const f = await fixture(':memory:', undefined, undefined, 'v1.5.0');
     expect((await f.request('/api/health')).data).toMatchObject({

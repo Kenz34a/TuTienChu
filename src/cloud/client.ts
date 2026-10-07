@@ -3,9 +3,11 @@ import { decodeSave } from '../game/storage';
 import type { GameState } from '../game/types';
 import { initialState } from '../game/engine';
 
-export const androidApp = Capacitor.isNativePlatform();
+export const mobileApp = Capacitor.isNativePlatform();
+export const androidApp = mobileApp && Capacitor.getPlatform() === 'android';
+export const iosApp = mobileApp && Capacitor.getPlatform() === 'ios';
 export const desktopApp = typeof window !== 'undefined' && window.vanTienDesktop?.platform === 'pc';
-export const nativeApp = androidApp || desktopApp;
+export const nativeApp = mobileApp || desktopApp;
 export const ACCOUNT_KEY = 'van-tien-ky.account.v1';
 export const SERVER_KEY = 'van-tien-ky.server.v1';
 export interface CloudSave {
@@ -39,7 +41,7 @@ export function validateServer(value: string): string {
   }
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
   if (
-    (url.protocol !== 'https:' && !(url.protocol === 'http:' && local && !androidApp)) ||
+    (url.protocol !== 'https:' && !(url.protocol === 'http:' && local && !mobileApp)) ||
     url.username ||
     url.password ||
     url.search ||

@@ -23,8 +23,8 @@ export function AccountPanel({ cloud, state }: { cloud: CloudController; state: 
         </div>
       </div>
       <p>
-        Đăng nhập cùng tài khoản trên PC, Android và web để dùng chung nhân vật, trang bị, nhiệm vụ
-        và tiến độ tam giới.
+        Đăng nhập cùng tài khoản trên PC, Android, iPhone/iPad và web để dùng chung nhân vật, trang
+        bị, nhiệm vụ và tiến độ tam giới.
       </p>
       {cloud.error && (
         <div className="account-error" role="alert">

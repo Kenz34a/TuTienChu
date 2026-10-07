@@ -24,6 +24,8 @@
 }
 body {
   margin: 0;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0
+    env(safe-area-inset-left, 0px);
 }
 button,
 input {

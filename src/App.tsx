@@ -80,7 +80,7 @@ import {
 } from './ExpansionPanels';
 import { qiCost, breakthroughTier, tierLabel } from './game/expansion';
 import { AccountPanel } from './cloud/AccountPanel';
-import { nativeApp, desktopApp, androidApp } from './cloud/client';
+import { nativeApp, desktopApp, mobileApp, iosApp } from './cloud/client';
 import {
   ITEMS,
   MAPS,
@@ -630,7 +630,7 @@ export default function App() {
       else if (result.saved) tell('Đã xuất bản lưu lên máy tính.');
       return;
     }
-    if (androidApp) {
+    if (mobileApp) {
       try {
         const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
         const { Share } = await import('@capacitor/share');
@@ -2146,7 +2146,7 @@ export default function App() {
       {dialog === 'account' && (
         <Modal
           title="Tài khoản & đồng bộ"
-          subtitle="Giữ đạo lộ bên bạn, từ PC đến Android."
+          subtitle="Giữ đạo lộ bên bạn, từ PC đến iPhone và Android."
           onClose={() => setDialog(null)}
         >
           <AccountPanel cloud={cloud} state={s} />
@@ -2390,7 +2390,7 @@ export default function App() {
               {
                 icon: Download,
                 name: 'Giữ lại đạo lộ',
-                text: 'Tiến trình tự lưu trên thiết bị. Đăng nhập cùng tài khoản để đồng bộ PC, Android và web; xuất bản lưu ở Cài đặt để giữ một bản sao riêng.',
+                text: 'Tiến trình tự lưu trên thiết bị. Đăng nhập cùng tài khoản để đồng bộ PC, Android, iPhone/iPad và web; xuất bản lưu ở Cài đặt để giữ một bản sao riêng.',
               },
             ].map((step, i) => (
               <div key={step.name}>
@@ -2411,7 +2411,7 @@ export default function App() {
       {dialog === 'install' && (
         <Modal
           title="Mang tiên lộ bên mình"
-          subtitle="App PC và Android cài riêng, dùng chung đạo lộ với web qua tài khoản."
+          subtitle="App Windows, Android và iOS cài riêng, dùng chung đạo lộ với web qua tài khoản."
           onClose={() => setDialog(null)}
         >
           <div className="install-hero">
@@ -2421,8 +2421,8 @@ export default function App() {
             <h3>Vân Tiên Ký</h3>
             <p>
               {nativeApp
-                ? `Bạn đang chơi app ${desktopApp ? 'PC' : 'Android'}. Đăng nhập để liên kết đạo lộ với web.`
-                : 'Tải app PC hoặc APK Android. Chơi ngoại tuyến và đồng bộ với web khi có mạng.'}
+                ? `Bạn đang chơi app ${desktopApp ? 'PC' : iosApp ? 'iPhone/iPad' : 'Android'}. Đăng nhập để liên kết đạo lộ với web.`
+                : 'Chơi trên Windows, Android hoặc iPhone/iPad; đồng bộ cùng tài khoản khi có mạng.'}
             </p>
             {!nativeApp && (
               <a
@@ -2470,7 +2470,7 @@ export default function App() {
             <h3>Chơi app PC trên Windows</h3>
             <p>
               Giải nén toàn bộ gói PC, mở <strong>VanTienKy.exe</strong> trong thư mục đã giải nén.
-              Game đã có sẵn; mở Tài khoản & đồng bộ để liên kết với web và Android.
+              Game đã có sẵn; mở Tài khoản & đồng bộ để liên kết với web, Android và iPhone/iPad.
             </p>
             <h3>Cài APK trên Android</h3>
             <p>
@@ -2482,10 +2482,20 @@ export default function App() {
               Mở game bằng Chrome hoặc Edge qua HTTPS, chọn menu ⋮ →{' '}
               <strong>Cài đặt ứng dụng</strong> / <strong>Thêm vào màn hình chính</strong>.
             </p>
-            <h3>iPhone & iPad</h3>
+            <h3>Chơi miễn phí trên iPhone & iPad</h3>
             <p>
               Mở bằng Safari → nút <strong>Chia sẻ</strong> → <strong>Thêm vào MH chính</strong> →{' '}
               <strong>Thêm</strong>.
+            </p>
+            <p>
+              Mở biểu tượng Vân Tiên Ký trên màn hình chính rồi đăng nhập cùng tài khoản. Lần đầu
+              cần mạng để tải game; sau đó có thể chơi ngoại tuyến và đồng bộ khi kết nối lại.
+            </p>
+            <h3>App iOS riêng</h3>
+            <p>
+              App iPhone/iPad có game đóng gói sẵn và chia sẻ bản lưu vào Tệp. Bản cài qua
+              TestFlight hoặc App Store sẽ có sau khi được ký và phát hành bằng tài khoản Apple
+              Developer. Hiện có thể tự cài thử bằng Xcode trên Mac.
             </p>
             <div className="info-note">
               <CircleHelp size={16} />
@@ -2504,7 +2514,7 @@ export default function App() {
           subtitle={
             cloud.account
               ? `Tài khoản ${cloud.account.username} · ${cloud.label}`
-              : 'Tự lưu trên thiết bị. Đăng nhập để đồng bộ PC, Android và web.'
+              : 'Tự lưu trên thiết bị. Đăng nhập để đồng bộ PC, Android, iPhone/iPad và web.'
           }
           onClose={() => setDialog(null)}
         >
@@ -2539,7 +2549,7 @@ export default function App() {
                 <small>
                   {cloud.account
                     ? cloud.label
-                    : 'Liên kết web, PC và app Android bằng một tài khoản'}
+                    : 'Liên kết web, PC, Android và iPhone bằng một tài khoản'}
                 </small>
               </span>
               <ChevronRight size={17} />

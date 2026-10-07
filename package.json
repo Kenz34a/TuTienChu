@@ -1,7 +1,7 @@
 {
   "name": "van-tien-ky",
   "version": "1.5.0",
-  "description": "Game tu tiên chữ — PC, Android, web và đồng bộ tài khoản",
+  "description": "Game tu tiên chữ — PC, Android, iOS, web và đồng bộ tài khoản",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs",
@@ -14,6 +14,9 @@
     "start": "node server-build/index.mjs",
     "android:sync": "npm run build && npx cap sync android",
     "android:build": "node scripts/build-android.mjs",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "ios:build": "node scripts/build-ios.mjs",
     "pc:build": "node --use-env-proxy scripts/build-pc.mjs",
     "pc:build:linux": "node --use-env-proxy scripts/build-pc.mjs --linux",
     "pc:dev": "npm run build && electron desktop/main.cjs",
@@ -37,6 +40,7 @@
     "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@capacitor/filesystem": "^8.1.4",
+    "@capacitor/ios": "^8.5.2",
     "@capacitor/share": "^8.0.3",
     "express": "^5.2.1",
     "lucide-react": "^1.52.0",

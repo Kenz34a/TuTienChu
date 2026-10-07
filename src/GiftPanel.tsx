@@ -75,7 +75,7 @@ export function GiftPanel({
           <h2>Một món quà, thêm bước tiên lộ.</h2>
           <p>
             Nhập giftcode do admin máy chủ phát hành. Quà lưu vào tài khoản và dùng chung trên web,
-            PC, Android.
+            PC, Android, iPhone/iPad.
           </p>
         </div>
       </section>

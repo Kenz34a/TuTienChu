@@ -1,0 +1,89 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      [
+        'ios/**',
+        'src/**',
+        'public/**',
+        'scripts/build-ios.mjs',
+        'capacitor.config.ts',
+        'package*.json',
+        'index.html',
+        '.github/workflows/ios.yml',
+      ]
+  pull_request:
+    paths:
+      [
+        'ios/**',
+        'src/**',
+        'public/**',
+        'scripts/build-ios.mjs',
+        'capacitor.config.ts',
+        'package*.json',
+        'index.html',
+        '.github/workflows/ios.yml',
+      ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: xcodebuild -version
+      - run: npm ci
+      - name: Build simulator app
+        run: npm run ios:build -- simulator
+      - name: Launch bundled game in an iPhone simulator
+        run: |
+          IOS_TEST_DEVICE=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(v["udid"] for devices in d["devices"].values() for v in devices if v["name"].startswith("iPhone")))')
+          xcrun simctl boot "$IOS_TEST_DEVICE"
+          xcrun simctl bootstatus "$IOS_TEST_DEVICE" -b
+          xcrun simctl install "$IOS_TEST_DEVICE" ios/DerivedData/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$IOS_TEST_DEVICE" vn.vantienky.game
+          sleep 5
+          xcrun simctl io "$IOS_TEST_DEVICE" screenshot release/ios-simulator.png
+      - name: Build unsigned physical-device archive
+        run: npm run ios:build -- device
+      - name: Verify bundled game and package artifacts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import plistlib
+          import subprocess
+          simulator=Path('ios/DerivedData/Build/Products/Debug-iphonesimulator/App.app')
+          device=Path('release/VanTienKy-ios-unsigned.xcarchive/Products/Applications/App.app')
+          for app in [simulator,device]:
+              info=plistlib.loads((app/'Info.plist').read_bytes())
+              assert info['CFBundleIdentifier']=='vn.vantienky.game'
+              assert info['CFBundleShortVersionString']=='1.5.0'
+              assert (app/'PrivacyInfo.xcprivacy').is_file()
+              for asset in Path('dist').rglob('*'):
+                  if asset.is_file():
+                      assert (app/'public'/asset.relative_to('dist')).read_bytes()==asset.read_bytes(), str(asset)
+          subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent',str(simulator),'release/van-tien-ky-ios-simulator.zip'],check=True)
+          subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent','release/VanTienKy-ios-unsigned.xcarchive','release/van-tien-ky-ios-unsigned-archive.zip'],check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-builds-require-signing-for-iphone
+          path: |
+            release/van-tien-ky-ios-simulator.zip
+            release/van-tien-ky-ios-unsigned-archive.zip
+            release/ios-simulator.png
+          if-no-files-found: error
+          retention-days: 14
