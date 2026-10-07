@@ -13,9 +13,17 @@ Mã nguồn nằm trong kho Git; các tệp app nằm trong **Releases**, không
 
 Để dựng lại bản phát hành trên GitHub, mở **Actions → Build Windows and Android release → Run workflow**. Tag phải khớp phiên bản trong `package.json`. Workflow kiểm tra game/API, build web, máy chủ, Windows và APK, xác minh APK/checksum rồi đưa các gói vào Releases. APK CI dùng khóa phát triển của máy build; nếu thay thế APK thử nghiệm ký bằng khóa khác, xuất bản lưu trước khi gỡ bản cũ để cài lại.
 
+## Online miễn phí: Render + Neon
+
+[**Deploy to Render**](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FKenz34a%2FTuTienChu) · [**Hướng dẫn từng bước cho người mới**](docs/deploy-render-neon.md)
+
+Tạo tài khoản **Neon Free**, lấy chuỗi kết nối PostgreSQL riêng, rồi tạo **Render Free** từ nhánh `main` bằng cấu hình `render.yaml`. Điền `DATABASE_URL`, `BOOTSTRAP_ADMIN_USERNAME` và `BOOTSTRAP_ADMIN_PASSWORD` trong Render; admin được tạo riêng trước khi website mở. Đăng nhập `/admin`, sau đó xóa cả hai biến bootstrap khỏi Render. Dữ liệu nằm ở Neon, giữ qua khởi động lại; thiếu `DATABASE_URL` thì cấu hình Render dừng thay vì dùng SQLite.
+
+Render Free ngủ sau 15 phút không truy cập, lần mở tiếp theo có thể chờ khoảng một phút. Trong app Windows/Android 1.5.0, nhập URL HTTPS Render trong **Tài khoản & đồng bộ**. Không dùng gói web-server ZIP 1.5.0 cũ cho Neon: triển khai mã hiện tại từ GitHub. Hướng dẫn có cách nhập dữ liệu SQLite cũ nếu cần giữ toàn bộ tài khoản.
+
 ## Chạy web và máy chủ đồng bộ
 
-Yêu cầu **Node.js 24** và npm. Cơ sở dữ liệu SQLite tích hợp trong Node, không cần dịch vụ cơ sở dữ liệu riêng.
+Yêu cầu **Node.js 24** và npm. Chạy cục bộ mặc định dùng SQLite tích hợp trong Node, không cần dịch vụ riêng. Có `DATABASE_URL` thì dùng PostgreSQL (Neon); không tự chuyển dữ liệu giữa hai cơ sở dữ liệu.
 
 ```bash
 npm ci
@@ -23,7 +31,7 @@ npm run build:all
 npm start
 ```
 
-Máy chủ nghe trên `0.0.0.0`, cổng **3000** mặc định, phục vụ web, API, APK và gói PC. Có thể đặt `PORT`, `DATA_DIR`, `CORS_ORIGINS` trong môi trường hosting (xem `.env.example`; không tự đọc `.env`). Bản lưu tài khoản ở `DATA_DIR/van-tien-ky.sqlite`; mặc định `var/`. Thư mục này cần ổ đĩa bền vững và sao lưu để dữ liệu không mất khi triển khai lại.
+Máy chủ nghe trên `0.0.0.0`, cổng **3000** mặc định, phục vụ web, API, APK và gói PC. Có thể đặt `PORT`, `DATA_DIR`, `DATABASE_URL`, `CORS_ORIGINS` trong môi trường hosting (xem `.env.example`; không tự đọc `.env`). Khi không dùng PostgreSQL, bản lưu tài khoản ở `DATA_DIR/van-tien-ky.sqlite`; mặc định `var/`. Thư mục này cần ổ đĩa bền vững và sao lưu để dữ liệu không mất khi triển khai lại.
 
 Khi phát triển, chạy máy chủ trên rồi mở thêm `npm run dev` (5173). Vite chuyển `/api` và `/downloads` về máy chủ 3000. `npm run preview` ở 4173 dùng để kiểm tra bản build. Dùng checkout sẵn có trong tác vụ cloud, không cần Git worktree.
 
@@ -33,7 +41,9 @@ npm run build:all # TypeScript + web + máy chủ
 npm run test:e2e  # Chromium desktop/điện thoại; tự khởi động backend và preview
 ```
 
-E2E dùng `/usr/bin/chromium` nếu có, hoặc `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. Nếu máy chưa có Chromium, dùng `npx playwright install chromium`. Dữ liệu thử nghiệm E2E được tách dưới `var/e2e` khi test tự khởi động máy chủ.
+Để kiểm thử PostgreSQL thật, đặt `TEST_DATABASE_URL` cho một database kiểm thử riêng rồi chạy `npm run build:server && npm test`; các bài PostgreSQL được bỏ qua khi không có biến này. GitHub Actions chạy cả SQLite lẫn PostgreSQL 17.
+
+E2E dùng `/usr/bin/chromium` nếu có, hoặc `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. Nếu máy chưa có Chromium, dùng `npx playwright install chromium`. Dữ liệu thử nghiệm E2E được tách dưới `var/e2e` khi dùng SQLite. Có `TEST_DATABASE_URL` thì backend và các tình huống admin dùng PostgreSQL; hãy dùng database kiểm thử riêng, vì backend E2E ghi tài khoản trong schema mặc định.
 
 ## Giftcode và trang điều hành admin
 
@@ -43,13 +53,13 @@ Trang quản trị riêng ở **`/admin`** trên website máy chủ. Khi thử t
 npm run admin -- grant ten_tai_khoan
 ```
 
-Đăng nhập trang admin bằng tài khoản đó. Không có tài khoản hay mật khẩu admin mặc định. Nếu máy chủ dùng `DATA_DIR` riêng, terminal cấp quyền phải dùng cùng giá trị. Có thể xem danh sách bằng `npm run admin -- list` hoặc gỡ quyền bằng `npm run admin -- revoke ten_tai_khoan`; không cho gỡ/khóa admin hoạt động cuối cùng. Cấp thêm admin qua mục Người chơi. Quyền được kiểm tra tại máy chủ cho mỗi yêu cầu; sửa giao diện hoặc bản lưu không tự cấp được quyền.
+Đăng nhập trang admin bằng tài khoản đó. Không có tài khoản hay mật khẩu admin mặc định. Nếu máy chủ dùng `DATA_DIR` riêng hoặc `DATABASE_URL`, terminal cấp quyền phải dùng cùng cấu hình. Render Free dùng bootstrap riêng trong [hướng dẫn triển khai](docs/deploy-render-neon.md) vì không có terminal. Có thể xem danh sách bằng `npm run admin -- list` hoặc gỡ quyền bằng `npm run admin -- revoke ten_tai_khoan`; không cho gỡ/khóa admin hoạt động cuối cùng. Cấp thêm admin qua mục Người chơi. Quyền được kiểm tra tại máy chủ cho mỗi yêu cầu; sửa giao diện hoặc bản lưu không tự cấp được quyền.
 
 Admin có thể:
 
 - Tìm người chơi, sửa tu vi (80 bậc), linh khí, tên, tiền và toàn bộ bản lưu; tặng linh/tiên/thần thạch, vật phẩm, trang bị. Trình chỉnh JSON cho phép điều hành các phần khác như linh căn, truyền thừa, tông môn, nhiệm vụ và danh hiệu, trong giới hạn bản lưu hợp lệ.
 - Khóa/mở khóa tài khoản, cấp/gỡ quyền admin, đổi mật khẩu, thu hồi tất cả phiên đăng nhập.
-- Tạo/bật/tắt giftcode, đặt quà, tu vi tối thiểu, thời gian mở/hết hạn, giới hạn lượt nhận; xem lịch sử tài khoản đã nhận. Mỗi tài khoản nhận một mã một lần; lượt và phần thưởng cập nhật cùng giao dịch SQLite. Mã không bị mất lượt nếu ba lô đầy hoặc phần thưởng vượt giới hạn.
+- Tạo/bật/tắt giftcode, đặt quà, tu vi tối thiểu, thời gian mở/hết hạn, giới hạn lượt nhận; xem lịch sử tài khoản đã nhận. Mỗi tài khoản nhận một mã một lần; lượt và phần thưởng cập nhật cùng giao dịch cơ sở dữ liệu. Mã không bị mất lượt nếu ba lô đầy hoặc phần thưởng vượt giới hạn.
 - Thông báo toàn máy chủ, bật/tắt bảo trì; khi bảo trì, người chơi vẫn xem và chơi cục bộ, các thao tác ghi máy chủ của người chơi tạm dừng. App lấy thông báo khi mở và có kết nối, chưa có push nền.
 - Hồi sinh, hồi máu hoặc kết liễu boss thế giới thật; xóa tin chat vi phạm.
 - Xem nhật ký thay đổi và khôi phục bản lưu trước lần chỉnh sửa/tặng quà; thao tác nhạy cảm có xác nhận và kiểm tra phiên bản dữ liệu để tránh ghi đè thay đổi mới.
@@ -73,6 +83,8 @@ docker run -d --name van-tien-ky --restart unless-stopped \
 Nếu môi trường build dùng proxy có CA riêng, Dockerfile hỗ trợ truyền CA bằng BuildKit secret `proxy_ca` (`docker build --secret id=proxy_ca,src=/duong-dan/ca.pem ...`); CA chỉ dùng khi cài phụ thuộc, không bị đóng gói trong image. Không tắt kiểm tra TLS.
 
 Đặt reverse proxy có HTTPS trước cổng 3000 và trỏ tên miền về máy chủ. Kiểm tra `/api/health` trả JSON `service: van-tien-ky, ready: true`; truy cập gốc tên miền phải hiển thị game. Khi dùng reverse proxy nhiều tầng, điều chỉnh `trust proxy` theo cấu hình thực tế. Hosting Node thông thường: lệnh build `npm ci && npm run build:all`, lệnh start `npm start`, mount ổ đĩa bền vững tại đường dẫn `DATA_DIR`.
+
+Có thể đặt `APP_RELEASE_TAG=v1.5.0` để nút tải app chuyển tới GitHub Releases khi máy chủ không có tệp. Cấu hình Render đã bật lựa chọn này.
 
 Đặt `release/van-tien-ky-android.apk` và `release/van-tien-ky-pc-windows.zip` trên máy chủ để các nút tải app hoạt động. Gói web/server ZIP chứa APK và mã nguồn PC; gói Windows ZIP tải riêng, sao chép vào `release/` trước khi triển khai nếu muốn phục vụ tải PC. Docker tự chứa các bản tải nếu có trước khi build; không cần SDK Android trên máy chủ web. Nếu đưa web và API ra hai tên miền riêng, cần cấu hình bổ sung; mặc định là chung một tên miền.
 
@@ -138,10 +150,10 @@ Bản web vẫn có thể cài PWA trên Chrome/Edge hoặc Safari. Cache ngoạ
 - **15 bí kíp:** tham ngộ đến cấp 10, vận dụng tối đa 3 đạo pháp; tăng công, thủ, sinh lực hoặc hiệu quả thiền.
 - **10 linh căn:** ngũ hành, Băng, Phong, Lôi, Thiên và Hỗn Độn. Kiểm tra một lần, tẩy luyện đến cấp 10; Hỗn Độn mở qua truyền thừa Thái Sơ. **9 truyền thừa** đòi hỏi khám phá, thiền, bí kíp hoặc vượt phó bản, nhận gia trì vĩnh viễn một lần.
 - **9 phó bản:** mỗi phó bản 3 cửa chiến đấu, giữ sinh lực giữa các cửa và lưu cả trận đang đánh. Tốn 18 thể lực, cần 50% sinh lực; hồi 30 phút từ lúc vào, kể cả rút lui hoặc bại trận. Vượt đủ ba cửa nhận linh khí, trang bị và vật phẩm.
-- **Cộng đồng:** thiên bảng top 100, top online và 3 boss thế giới hồi sinh mỗi giờ vào phút 00/20/40, tồn tại 15 phút. Công kích hồi 5 giây theo tài khoản; sinh lực và đóng góp giữ trong SQLite qua lần khởi động lại. Thưởng mỗi chu kỳ nhận một lần, còn nhận được trong 7 ngày. Cần kết nối cùng máy chủ và đồng bộ trước khi tham gia.
+- **Cộng đồng:** thiên bảng top 100, top online và 3 boss thế giới hồi sinh mỗi giờ vào phút 00/20/40, tồn tại 15 phút. Công kích hồi 5 giây theo tài khoản; sinh lực và đóng góp giữ trong cơ sở dữ liệu qua lần khởi động lại. Thưởng mỗi chu kỳ nhận một lần, còn nhận được trong 7 ngày. Cần kết nối cùng máy chủ và đồng bộ trước khi tham gia.
 - **50 danh hiệu:** 5 phẩm Hiếm/Sử thi/Truyền thuyết/Thần thoại/Chí tôn, 6 hiệu ứng thanh vân/hỏa diễm/lôi quang/băng tinh/tinh hà/hồng mông. Mở từ cảnh giới, trừ yêu, thiền, map, bí kíp, linh căn, truyền thừa, tông môn, phó bản, tài phú và NPC/boss. Đã mở thì giữ vĩnh viễn. Chỉ gia trì của danh hiệu đang mang có hiệu lực; có thể bật/tắt chuyển động, hỗ trợ giảm chuyển động của thiết bị. Hiển thị trên nhân vật, thiên bảng và chat; lưu/đồng bộ cùng nhân vật.
 - **Đột phá rõ chi phí:** bảng hiển thị tu vi, linh khí, linh thạch và thạch theo giới, chỉ rõ phần còn thiếu. Nút Đột phá cho xem lý do khi chưa đủ thay vì bị khóa xám. Cẩm nang 20 cảnh giới ghi phương pháp tu luyện trong cảnh giới và cách vượt cảnh giới; 3 đường đột phá: cơ bản, dùng 1 Tụ Linh Đan giảm 20% linh khí, hoặc 1 tinh hoa giảm 20% linh thạch. Không trừ tài nguyên khi chưa đủ điều kiện; chưa cần tiên/thần thạch ở Kim Đan.
-- **Chat thế giới:** kênh Tam giới/Địa/Tiên/Thần, gửi bằng tài khoản đã đồng bộ; tên, tu vi và danh hiệu lấy từ bản lưu máy chủ. Tiên/Thần giới yêu cầu tu vi tương ứng để gửi. Mỗi tin tối đa 200 ký tự, cách nhau 3 giây; lịch sử SQLite tồn tại qua khởi động lại, tối đa 2.000 tin/3 ngày, hiển thị 100 tin gần nhất mỗi kênh. Chat cần cùng máy chủ HTTPS, chưa có ảnh/file/nhắn riêng; admin có thể xóa tin vi phạm.
+- **Chat thế giới:** kênh Tam giới/Địa/Tiên/Thần, gửi bằng tài khoản đã đồng bộ; tên, tu vi và danh hiệu lấy từ bản lưu máy chủ. Tiên/Thần giới yêu cầu tu vi tương ứng để gửi. Mỗi tin tối đa 200 ký tự, cách nhau 3 giây; lịch sử máy chủ tồn tại qua khởi động lại, tối đa 2.000 tin/3 ngày, hiển thị 100 tin gần nhất mỗi kênh. Chat cần cùng máy chủ HTTPS, chưa có ảnh/file/nhắn riêng; admin có thể xóa tin vi phạm.
 - **Truy cập nhanh:** Bảng xếp hạng, Chat thế giới, Sổ danh hiệu, Cách đột phá và Nhập giftcode ngay đầu trang Đạo lộ. Nếu chưa kết nối máy chủ, bảng cá nhân hiển thị nhân vật thiết bị và nêu rõ trạng thái; thứ hạng cộng đồng cần máy chủ.
 - **Thông báo trong game:** boss hồi sinh, top online lúc vào, nhiệm vụ sẵn nhận và đủ tài nguyên đột phá; có trạng thái chưa đọc, giữ tối đa 50 tin. Hiển thị khi đang mở game; chưa có push khi đã đóng app.
 - **Giftcode:** quà tài khoản do admin tạo, gồm ba loại thạch, linh khí, sáu vật phẩm xếp chồng hoặc một trang bị; có thời hạn, tu vi tối thiểu và giới hạn lượt.
@@ -150,7 +162,7 @@ Bản web vẫn có thể cài PWA trên Chrome/Edge hoặc Safari. Cache ngoạ
 
 ## Lưu tiến trình và cấu trúc
 
-Bản lưu thiết bị ở `localStorage` với khóa `van-tien-ky.save.v1`. Vào **Cài đặt → Xuất bản lưu** để sao lưu hoặc nhập JSON. Xóa dữ liệu trình duyệt/app sẽ xóa bản cục bộ và phiên đăng nhập; bản trên tài khoản vẫn ở máy chủ nếu ổ đĩa dữ liệu được giữ.
+Bản lưu thiết bị ở `localStorage` với khóa `van-tien-ky.save.v1`. Vào **Cài đặt → Xuất bản lưu** để sao lưu hoặc nhập JSON. Xóa dữ liệu trình duyệt/app sẽ xóa bản cục bộ và phiên đăng nhập; bản trên tài khoản vẫn ở máy chủ nếu cơ sở dữ liệu được giữ.
 
 Bản lưu nhập vào được kiểm tra phiên bản, chỉ số, ID vật phẩm, ID trang bị, nhiệm vụ và trạng thái trận chiến. Bản lưu cũ lỗi sẽ được giữ nguyên và chặn ghi đè tự động để người chơi có thể xuất trước khi xử lý.
 
@@ -160,7 +172,7 @@ Bản 1.5 chuyển bản lưu v1 sang định dạng v2, giữ cảnh giới Sơ
 src/game/          Dữ liệu và cơ chế tu tiên, kiểm tra bản lưu, kiểm thử
 src/cloud/         API client, đồng bộ, giao diện tài khoản và xử lý xung đột
 src/App.tsx        Các màn hình, hội thoại, chiến đấu
-server/            Express, tài khoản scrypt, phiên đăng nhập, SQLite, API lưu
+server/            Express, tài khoản scrypt, phiên đăng nhập, SQLite/PostgreSQL, API lưu
 android/           Dự án Android riêng, Capacitor, icon và splash
 desktop/           App PC Electron, giao thức nội bộ, preload và xuất bản lưu
 scripts/           Build web/offline, backend, APK và PC

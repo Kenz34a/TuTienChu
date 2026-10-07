@@ -15,7 +15,7 @@ async function fixture() {
   const dir = mkdtempSync(join(tmpdir(), 'van-tien-admin-')),
     path = join(dir, 'van-tien-ky.sqlite');
   let time = Date.now(),
-    service = createApp({ databasePath: path, now: () => time });
+    service = await createApp({ databasePath: path, now: () => time });
   let server = service.app.listen(0, '127.0.0.1');
   await new Promise<void>((r) => server.once('listening', r));
   let base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
@@ -58,15 +58,15 @@ async function fixture() {
   expect(cli('grant', 'server_owner').status).toBe(0);
   const restart = async () => {
     await new Promise<void>((r) => server.close(() => r()));
-    service.close();
-    service = createApp({ databasePath: path, now: () => time });
+    await service.close();
+    service = await createApp({ databasePath: path, now: () => time });
     server = service.app.listen(0, '127.0.0.1');
     await new Promise<void>((r) => server.once('listening', r));
     base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
   };
   cleanups.push(async () => {
     await new Promise<void>((r) => server.close(() => r()));
-    service.close();
+    await service.close();
     rmSync(dir, { recursive: true, force: true });
   });
   const create = async (code: string, extra: Record<string, unknown> = {}) => {

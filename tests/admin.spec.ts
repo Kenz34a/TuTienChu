@@ -5,11 +5,19 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { openDatabase } from '../server/database.mjs';
 
 async function backend() {
   const dir = await mkdtemp(join(tmpdir(), 'van-tien-admin-ui-'));
-  const service = createApp({
+  const url = process.env.TEST_DATABASE_URL;
+  const schema = 'test_' + randomUUID().replaceAll('-', '');
+  const root = url ? await openDatabase({ databaseURL: url }) : undefined;
+  if (root) await root.exec(`CREATE SCHEMA ${schema}`);
+  const service = await createApp({
     databasePath: join(dir, 'van-tien-ky.sqlite'),
+    databaseURL: url,
+    databaseSchema: url ? schema : undefined,
     allowedOrigins: ['http://127.0.0.1:4173'],
   });
   const server = service.app.listen(0, '127.0.0.1');
@@ -42,7 +50,12 @@ async function backend() {
     player = await register('ordinary_player');
   const cli = spawnSync(process.execPath, ['scripts/admin.mjs', 'grant', 'server_owner'], {
     cwd: resolve('.'),
-    env: { ...process.env, DATA_DIR: dir },
+    env: {
+      ...process.env,
+      DATA_DIR: dir,
+      DATABASE_URL: url || '',
+      DATABASE_SCHEMA: url ? schema : '',
+    },
     encoding: 'utf8',
   });
   expect(cli.status).toBe(0);
@@ -56,7 +69,11 @@ async function backend() {
         server.close(() => r());
         server.closeAllConnections();
       });
-      service.close();
+      await service.close();
+      if (root) {
+        await root.exec(`DROP SCHEMA ${schema} CASCADE`);
+        await root.close();
+      }
       await rm(dir, { recursive: true, force: true });
     },
   };

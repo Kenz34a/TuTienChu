@@ -24,7 +24,10 @@ export default defineConfig({
     {
       command: 'npm run build:server && npm start',
       url: 'http://127.0.0.1:3000/api/health',
-      env: { DATA_DIR: 'var/e2e' },
+      env: {
+        DATA_DIR: 'var/e2e',
+        ...(process.env.TEST_DATABASE_URL ? { DATABASE_URL: process.env.TEST_DATABASE_URL } : {}),
+      },
       reuseExistingServer: !process.env.CI,
     },
     {

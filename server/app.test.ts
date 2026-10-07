@@ -11,8 +11,13 @@ const cleanups: (() => Promise<void>)[] = [];
 afterEach(async () => {
   for (const close of cleanups.splice(0).reverse()) await close();
 });
-async function fixture(path = ':memory:', clock?: () => number, pcPath?: string) {
-  const service = createApp({ databasePath: path, now: clock, pcPath });
+async function fixture(
+  path = ':memory:',
+  clock?: () => number,
+  pcPath?: string,
+  appReleaseTag?: string,
+) {
+  const service = await createApp({ databasePath: path, now: clock, pcPath, appReleaseTag });
   const server: Server = await new Promise((resolve) => {
     const s = service.app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -24,7 +29,7 @@ async function fixture(path = ':memory:', clock?: () => number, pcPath?: string)
     if (closed) return;
     closed = true;
     await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())));
-    service.close();
+    await service.close();
   };
   cleanups.push(close);
   const request = async (
@@ -60,6 +65,23 @@ async function fixture(path = ':memory:', clock?: () => number, pcPath?: string)
   return { request, register, close, base };
 }
 describe('shared web and Android accounts', () => {
+  it('serves app downloads through the configured trusted release when hosting has no local packages', async () => {
+    const f = await fixture(':memory:', undefined, undefined, 'v1.5.0');
+    expect((await f.request('/api/health')).data).toMatchObject({
+      apkAvailable: true,
+      pcAvailable: true,
+    });
+    for (const file of ['van-tien-ky-android.apk', 'van-tien-ky-pc-windows.zip']) {
+      const response = await fetch(f.base + '/downloads/' + file, { redirect: 'manual' });
+      expect(response.status).toBe(302);
+      expect(response.headers.get('location')).toBe(
+        'https://github.com/Kenz34a/TuTienChu/releases/download/v1.5.0/' + file,
+      );
+    }
+    await expect(createApp({ appReleaseTag: 'https://evil.example' })).rejects.toThrow(
+      'Invalid app release tag',
+    );
+  });
   it('shares authenticated world chat with canonical character names and titles, cooldown and realm gates', async () => {
     let time = Date.now();
     const f = await fixture(':memory:', () => time),
